@@ -12,7 +12,7 @@ Initial features
     - Add and remove books
     - Search for books using key terms (e.g. title, author, category...etc.)
     - Record and track loans
-    - Provide information about library use (most popular books category, author ...etc)
+    - Provide information about library use (most popular books, category, author ...etc.)
 - Enhanced
     - Book reviews
     - Next book recommendation
