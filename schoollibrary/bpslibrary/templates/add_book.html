@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Add a book to the library</h2>
+<form method="POST">
+    <dl>
+        <dt>ISBN 10:
+        <dd><input type="text", name="isbn10">
+        <dt>ISBN 13:
+        <dd><input type="text", name="isbn13">
+        <dt>Title:
+        <dd><input type="text", name="title">
+
+    </dl>
+</form>
+{% endblock %}

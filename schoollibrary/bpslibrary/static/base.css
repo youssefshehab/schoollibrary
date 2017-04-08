@@ -1,0 +1,48 @@
+
+body {
+    /*background-color: #A7FE6D;*/
+    background-color: rgb(166,239,24); /*#A6EF18*/
+    margin: 0;
+}
+
+footer {
+    color: #3D9402;
+    width: 100%;
+    text-align: center;
+    position: absolute;
+    bottom: 5px;
+}
+
+.top-navi {
+    background-color: rgb(215, 248, 150);
+    height: 40px;
+    width: 100%;
+    padding: 0px;
+}
+
+.message-bar {
+    background-color: rgb(193,244,94);
+    min-height: 70px;
+    width: 100%; 
+}
+
+.button {
+    background-color: rgb(0, 195, 247);
+    border-bottom-color: rgb(0, 160, 209);
+    border-bottom-style: solid;
+    border-bottom-width: 5px;
+
+}
+
+.logo {
+    display: block;
+    position: absolute;
+    width: 300px;
+    right: 5px;
+    top: 120px;
+}
+
+#logo {
+    align-self: stretch;
+    align-content: flex-end;
+}

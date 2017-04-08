@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="eng">
+    <head>
+        {% block head %}
+        <link rel="stylesheet" href="{{ url_for('static', filename='base.css') }}" />
+        <title>{% block title %}{% endblock %}</title>
+        {% endblock %}
+    </head>
+    <body>
+        <div class="top-navi">{% block top_navi %}{% endblock %}</div>
+        <div class="message-bar">{% block message_bar %}{% endblock %}</div>
+        <div id="logo"><img class="logo" src="{{ url_for('static', filename='bhp_logo_trans_2.png') }}" /></div>
+        <div id="content" >{% block content %}{% endblock %}</div>
+    </body>
+    <footer>
+            {% block footer %}
+            &copy; 2017 by Youssef Shehab
+            {% endblock %}
+    </footer>
+</html>
