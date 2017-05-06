@@ -39,6 +39,9 @@ class Author(Model):
 
     books = relationship("Book", back_populates='author')
 
+    def __init__(self, name):
+        self.name = name
+    
     def __repr__(self):
         return '<Author %r>' % self.name
 
@@ -51,6 +54,9 @@ class Category(Model):
     description = Column(String)
     books = relationship('Book', back_populates='category')
 
+    def __init__(self, name):
+        self.name = name
+    
     def __repr__(self):
         return '<Category %r>' % self.name
 

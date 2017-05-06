@@ -1,15 +1,28 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>Add a book to the library</h2>
-<form method="POST">
-    <dl>
-        <dt>ISBN 10:
-        <dd><input type="text", name="isbn10">
-        <dt>ISBN 13:
-        <dd><input type="text", name="isbn13">
-        <dt>Title:
-        <dd><input type="text", name="title">
+    <h2>Add a book to the library</h2>
+    <form method="POST" action="{{ url_for('books.add_book')}}" target="_self">
+        <dl>
+            <dt>ISBN:<dd><input type="text", name="isbn">
+            <dt>Title:<dd><input type="text", name="book_title">
+            <dt><dd><input type="submit" value="Find book">
+        </dl>
+    </form>
+    <div>
+        ISBN entered: {{ searchIsbn }} <br>
+        Title entered: {{ searchTitle }} <br>
+    </div>
+    <div id="found_books">
+        <table>
+            <thead>
+                <tr><th>Book title</th><th>Description</th></tr>
+            </thead>
+            <tbody>
+                {% for book in found_books %}
+                <tr><td>{{ book.title }}</td><td>{{ book.preview | safe }}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 
-    </dl>
-</form>
 {% endblock %}

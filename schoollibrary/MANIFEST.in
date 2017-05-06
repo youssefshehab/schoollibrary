@@ -1,4 +1,3 @@
-graft bhplibrary/templates
-graft bhplibrary/static
-graft bhplibrary/*.py
-include bhplibrary/schema.sql
+graft bpslibrary/templates
+graft bpslibrary/static
+graft bpslibrary/*.py
