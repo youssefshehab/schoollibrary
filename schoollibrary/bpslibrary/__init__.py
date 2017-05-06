@@ -2,7 +2,7 @@ from flask import Flask
 #from flask_bootstrap import Bootstrap
 
 
-INST_PATH = '/schoollibrary/schoollibrary/bpslibrary'
+INST_PATH = '/home/youssef/Workspace/projects/schoollibrary/schoollibrary/bpslibrary'
 app = Flask(__name__, instance_path=INST_PATH, instance_relative_config=True)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS']=False
 app.config['BOOTSTRAP_USE_MINIFIED']=True
