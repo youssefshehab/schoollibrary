@@ -10,6 +10,7 @@ Model = declarative_base(name='Model')
 Model.query = db_session.query_property()
 
 def init_db():
+    '''Initialises the database'''
     from bpslibrary.models import Model
     Model.metadata.create_all(bind=engine)
 
