@@ -1,3 +1,0 @@
-graft bpslibrary/templates
-graft bpslibrary/static
-graft bpslibrary/*.py

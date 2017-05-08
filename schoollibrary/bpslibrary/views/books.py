@@ -1,6 +1,6 @@
 
 from flask import Blueprint, render_template, jsonify, request
-from bpslibrary.database import db_session
+from .. import db_session
 from bpslibrary.models import Author, Book, Category, ReadingLevel
 import requests, json
 

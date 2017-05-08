@@ -1,7 +1,7 @@
 from sqlalchemy import Column, String, Integer, Sequence, ForeignKey, Binary
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
-from bpslibrary.database import Model
+from . import Model
 
 
 class ClassRoom(Model):
