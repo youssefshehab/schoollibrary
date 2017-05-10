@@ -1,13 +1,16 @@
 from sqlalchemy import Column, String, Integer, Sequence, ForeignKey, Binary
 from sqlalchemy.orm import relationship
-from sqlalchemy.ext.declarative import declarative_base
-from . import Model
+# from sqlalchemy.ext.declarative import declarative_base
+from bpslibrary import Model
 
 
 class ClassRoom(Model):
     '''A school class'''
     __tablename__ = 'class_rooms'
-    id = Column(Integer, Sequence('class_rooms_seq', start=0, increment=1), primary_key=True)
+    id = Column(Integer,
+                Sequence('class_rooms_seq', start=0, increment=1),
+                primary_key=True)
+
     name = Column(String, unique=True)
     year = Column(Integer, nullable=False)
     username = Column(String, unique=True)
@@ -21,7 +24,9 @@ class ClassRoom(Model):
 class Pupil(Model):
     '''A pupil in the school'''
     __tablename__ = 'pupils'
-    id = Column(Integer, Sequence('pupils_seq', start=0, increment=1), primary_key=True)
+    id = Column(Integer,
+                Sequence('pupils_seq', start=0, increment=1),
+                primary_key=True)
     name = Column(String, nullable=False)
     class_room_id = Column(Integer, ForeignKey('class_rooms.id'))
     class_room = relationship("ClassRoom", back_populates="pupils")
@@ -33,7 +38,9 @@ class Pupil(Model):
 class Author(Model):
     """A book author"""
     __tablename__ = 'authors'
-    id = Column(Integer, Sequence('authors_seq', start=0, increment=1), primary_key=True)
+    id = Column(Integer,
+                Sequence('authors_seq', start=0, increment=1),
+                primary_key=True)
     name = Column(String, nullable=False)
     bio = Column(String)
 
@@ -41,7 +48,7 @@ class Author(Model):
 
     def __init__(self, name):
         self.name = name
-    
+
     def __repr__(self):
         return '<Author %r>' % self.name
 
@@ -49,21 +56,26 @@ class Author(Model):
 class Category(Model):
     """Category of a book"""
     __tablename__ = 'categories'
-    id = Column(Integer, Sequence('categories_seq', start=0, increment=1), primary_key=True)
+    id = Column(Integer,
+                Sequence('categories_seq', start=0, increment=1),
+                primary_key=True)
     name = Column(String, nullable=False)
     description = Column(String)
     books = relationship('Book', back_populates='category')
 
     def __init__(self, name):
         self.name = name
-    
+
     def __repr__(self):
         return '<Category %r>' % self.name
+
 
 class ReadingLevel(Model):
     '''Book reading level'''
     __tablename__ = 'reading_levels'
-    id = Column(Integer, Sequence('reading_level_seq', start=0, increment=1), primary_key=True)
+    id = Column(Integer,
+                Sequence('reading_level_seq', start=0, increment=1),
+                primary_key=True)
     level = Column(String, unique=True)
     age_min = Column(Integer)
     age_max = Column(Integer)
