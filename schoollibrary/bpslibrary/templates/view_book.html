@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block scripts %}
+    {{ super() }}
+    <script type="text/javascript">
+        $(document).ready(
+            function(){
+                $('.collapse')
+                    .on('show.bs.collapse', 
+                        function(){
+                            $(this).parent().find(".glyphicon-expand")
+                                .removeClass("glyphicon-expand")
+                                .addClass("glyphicon-collapse-down");
+                    })
+                    .on('hide.bs.collapse', 
+                        function(){
+                            $(this).parent().find(".glyphicon-collapse-down")
+                                .removeClass("glyphicon-collapse-down")
+                                .addClass("glyphicon-expand");
+                    });
+            });
+    </script>
+{% endblock %}
+{% block content %}
+    <div class="container-fluid">
+        <h1 class="text-primary">View books</h1>
+            <div class="panel-group" id="found_books">
+                {% for book in books %}
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h4 class="panel-title">
+                            <div class="container">
+                                <a data-toggle="collapse" href="#found-book-{{ loop.index }}" >
+                                    <div class="row">
+                                        <div class="col-sm-2">
+                                            <img class="img-responsive img-thumbnail" src="{{ book.thumbnail_url }}">
+                                        </div>
+                                        <div>
+                                            <br>
+                                            <span class="glyphicon glyphicon-expand pull-left"> </span>
+                                        </div>
+                                        <div class="col-sm-9">
+                                            <div>{{ book.title }}</div>
+                                            <div><h5 class="text-muted-green">{{ book.get_short_description() | safe }}</h5></div>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                        </h4>
+                        <div>
+                            <a class="col-xs-offset-2" href="{{ book.preview_url }}" target="blank">Preview on google books >></a>
+                        </div>
+                    </div>        
+                    <div id="found-book-{{ loop.index }}" class="panel-collapse collapse out">
+                        <div class="panel-body">
+                            <p>
+                                <dt>Description</dt>
+                                <dd>{{ book.description | safe }}</dd>
+                            </p>
+                            <p>
+                                <dt>Authors</dt>
+                                <dd>{{ book.get_author_name() }}</dd>
+                            </p>
+                            <p>
+                                <dt>Categories</dt>
+                                <dd>{{ book.get_category_name() }}</dd>
+                            </p>
+                            <p>
+                                <dt>Reading Level</dt>
+                                <dd></dd>
+                            </p>
+                            <p>
+                                <dt> <span class="glyphicon glyphicon-barcode"></span> ISBN</dt>
+                                <dd>{{ book.isbn13 }}</dd>
+                                <dd>{{ book.isbn10 }}</dd>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+{% endblock %}

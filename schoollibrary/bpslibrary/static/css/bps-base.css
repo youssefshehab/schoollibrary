@@ -1,19 +1,25 @@
 
 /* color schema */
 
-
 html{
     height: 100%;
 }
 
+.bg-1 {
+    background-color: #A6EF19; 
+}
+
 body {
-    background-color: #A6EF18; /* rgb(166,239,24); */
+    background-color: #A6EF19; /* rgb(166,239,24); */
     margin: 0;
     display: flex;
     flex-direction: column;
     min-height: 100%;
     flex: 1
-    
+}
+
+#content {
+    display: inline-block;
 }
 
 .container {
@@ -22,7 +28,7 @@ body {
 
 
 .bps-footer {
-    /*color: #3D9402;*/
+    color: #3D9402;
     text-align: center;
     padding: 20px;
     /*
@@ -50,6 +56,7 @@ body {
     color: white;
     border: none;
     padding: 5px;
+    font-weight: bolder;
     background-color: rgb(0, 195, 247);
     border-bottom-color: rgb(0, 160, 209);
     border-bottom-style: solid;
@@ -66,6 +73,24 @@ body {
     max-width: 200px;
 }
 
-.text-muted{
-    color: #3D9402;
+.text-muted-green{
+    color: #73B000; /* 3D9402; */
+
 }
+
+.text-muted-grey {
+    color: #F1F1F1 !important; /*#3D9402;*/
+}
+
+/*
+.text-default {
+    /*color: #0163A5; /* #00A0D1;  
+    text-shadow: 1px 1px 2px #00C3F7; 
+    font-family: Colfax-Medium,Arial,Helvetica,sans-serif;
+}
+*/
+
+.caret{
+        transform:rotate(-90deg);
+        transition:all 0.3s ease-in-out;
+    }

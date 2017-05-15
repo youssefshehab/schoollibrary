@@ -1,13 +1,13 @@
 # pylint: disable=C0413, C0103
 
-"""Broadheath Primary School library system"""
+"""BPS library system"""
 
 
 from flask import Flask
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
-from flask_zurb_foundation import Foundation
+# from flask_zurb_foundation import Foundation
 
 
 app = Flask(__name__, instance_relative_config=True)
@@ -28,7 +28,7 @@ Model.metadata.create_all(bind=engine)
 from bpslibrary.views import books, index   # noqa
 app.register_blueprint(books.mod)
 app.register_blueprint(index.mod)
-
+    
 
 @app.teardown_appcontext
 def shutdown_session(exception=None):
@@ -36,7 +36,7 @@ def shutdown_session(exception=None):
 
     db_session.remove()
 
-Foundation(app)
+# Foundation(app)
 
 if __name__ == '__main__':
     app.run()
