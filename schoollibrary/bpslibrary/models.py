@@ -1,34 +1,34 @@
 """The entities in the library"""
 
-# pylint: disable=C0103
 
 from sqlalchemy import (Column, String, Integer, Sequence,
                         ForeignKey, Binary, Table)
 from sqlalchemy.orm import relationship
 # from sqlalchemy.ext.declarative import declarative_base
-from bpslibrary import Model
-
+from bpslibrary import Model, db_session
 
 # Associations
 book_author_association = \
     Table('book_author_association',
           Model.metadata,
           Column('book_id', Integer, ForeignKey('books.id')),
-          Column('author_id', Integer, ForeignKey('authors.id')))
-
+          Column('author_id', Integer, ForeignKey('authors.id')),
+          extend_existing=True)
 
 book_category_association = \
     Table('book_category_association',
           Model.metadata,
           Column('book_id', Integer, ForeignKey('books.id')),
-          Column('category_id', Integer, ForeignKey('categories.id')))
+          Column('category_id', Integer, ForeignKey('categories.id')),
+          extend_existing=True)
 
 
 class ClassRoom(Model):
-    '''A school class'''
+    """A school class"""
 
     # orm required fields
     __tablename__ = 'class_rooms'
+    __table_args__ = {'extend_existing': True}
     id = Column(Integer,
                 Sequence('class_rooms_seq', start=0, increment=1),
                 primary_key=True)
@@ -40,17 +40,18 @@ class ClassRoom(Model):
     password = Column(String, nullable=False)
 
     # relationships
-    pupils = relationship("Pupil", back_populates='class_room')
+    pupils = relationship('Pupil', back_populates='class_room')
 
     def __repr__(self):
-        return '<Class %r>' % self.name
+        return "<Class %r>" % self.name
 
 
 class Pupil(Model):
-    '''A pupil in the school'''
+    """A pupil in the school"""
 
     # orm required fields
     __tablename__ = 'pupils'
+    __table_args__ = {'extend_existing': True}
     id = Column(Integer,
                 Sequence('pupils_seq', start=0, increment=1),
                 primary_key=True)
@@ -60,10 +61,10 @@ class Pupil(Model):
 
     # relationships
     class_room_id = Column(Integer, ForeignKey('class_rooms.id'))
-    class_room = relationship("ClassRoom", back_populates="pupils")
+    class_room = relationship('ClassRoom', back_populates='pupils')
 
     def __repr__(self):
-        return '<Pupil %r>' % self.name
+        return "<Pupil %r>" % self.name
 
 
 class Category(Model):
@@ -71,6 +72,7 @@ class Category(Model):
 
     # orm required fields
     __tablename__ = 'categories'
+    __table_args__ = {'extend_existing': True}
     id = Column(Integer,
                 Sequence('categories_seq', start=0, increment=1),
                 primary_key=True)
@@ -88,28 +90,7 @@ class Category(Model):
         self.name = name
 
     def __repr__(self):
-        return '<Category %r>' % self.name
-
-
-class ReadingLevel(Model):
-    '''Book reading level'''
-
-    # orm requried fields
-    __tablename__ = 'reading_levels'
-    id = Column(Integer,
-                Sequence('reading_level_seq', start=0, increment=1),
-                primary_key=True)
-
-    # columns
-    level = Column(String, unique=True)
-    age_min = Column(Integer)
-    age_max = Column(Integer)
-
-    # relationships
-    books = relationship('Book', back_populates='reading_level')
-
-    def __repr__(self):
-        return '<ReadingLevel %r age(%r-%r)>' % self.level, self.age_min, self.age_max
+        return "<Category %r>" % self.name
 
 
 class Author(Model):
@@ -117,6 +98,7 @@ class Author(Model):
 
     # orm required fields
     __tablename__ = 'authors'
+    __table_args__ = {'extend_existing': True}
     id = Column(Integer,
                 Sequence('authors_seq', start=0, increment=1),
                 primary_key=True)
@@ -130,13 +112,11 @@ class Author(Model):
                          secondary=book_author_association,
                          back_populates='authors')
 
-    # books = relationship('BookAuthorAssociation', back_populates='author')
-
     def __init__(self, name):
         self.name = name
 
     def __repr__(self):
-        return '<Author %r>' % self.name
+        return "<Author %r>" % self.name
 
 
 class Book(Model):
@@ -144,6 +124,7 @@ class Book(Model):
 
     # orm required fields
     __tablename__ = 'books'
+    __table_args__ = {'extend_existing': True}
     id = Column(Integer,
                 Sequence('books_seq', start=0, increment=1),
                 primary_key=True)
@@ -153,49 +134,42 @@ class Book(Model):
     isbn13 = Column(String, unique=True, nullable=True)
     title = Column(String)
     description = Column(String)
-    image = Column(Binary)
     thumbnail_url = Column(String)
     preview_url = Column(String)
+    availability = Column(String)
 
     # relaationships
-    reading_level_id = Column(Integer, ForeignKey('reading_levels.id'))
-    reading_level = relationship("ReadingLevel", back_populates="books")
-
-    categories = relationship("Category",
+    categories = relationship('Category',
                               secondary=book_category_association,
-                              back_populates="books")
+                              back_populates='books')
 
     authors = relationship('Author',
                            secondary=book_author_association,
                            back_populates='books')
 
-    # author_id = Column(Integer, ForeignKey('authors.id'))
-    # authors = relationship('BookAuthorAssociation', back_populates="book")
-
-    def __repr__(self):
-        return '<Book %r>' % self.title
-
-    def get_author_name(self):
-        '''Returns the names of the author(s)'''
-
+    @property
+    def authors_names(self):
+        """The names of the author(s) separated by comma"""
         if len(self.authors) > 1:
-            return ', '.join([a.name for a in self.authors])
-        else:
+            return ", ".join([a.name for a in self.authors])
+        elif len(self.authors) == 1:
             return self.authors[0].name
 
-    def get_category_name(self):
-        '''Returns the names of the categories'''
-
+    @property
+    def categories_names(self):
+        """The names of the categories seperated by comma"""
         if len(self.categories) > 1:
-            return ', '.join([c.name for c in self.categories])
+            return ", ".join([c.name for c in self.categories])
         elif len(self.categories) == 1:
             return self.categories[0].name
-        else:
-            return None
 
-    def get_short_description(self):
-        '''Returns the first 50 character from the description'''
-
+    @property
+    def short_description(self):
+        """The first 150 characters from the description"""
         if self.description and self.description.strip():
-            return self.description[:150] + ' ...'
-        return '...'
+            return self.description[:150] + "..."
+        else:
+            return "..."
+
+    def __repr__(self):
+        return "<Book %r>" % self.title

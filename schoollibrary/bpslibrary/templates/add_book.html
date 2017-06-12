@@ -123,19 +123,6 @@
                                     Separate multiple categories with a comma e.g. Nonfiction, Animals
                                 </small> 
                             </div>
-                            <div class="form-group">
-                                <label for="ma-reading-level">Reading Level</label>
-                                <select id="ma-reading-level" class="form-control" type="text" name="book_level" 
-                                        aria-describedby="ma-reading-level-help">
-                                    <option value="-1" selected="selected" class="text-muted-grey">
-                                        Select a level</option>
-                                    <option value="1">1</option>
-                                    <option value="2">2</option>
-                                    <option value="3">3</option>
-                                </select>
-                                <small id="ma-reading-level-help" class="help-block text-muted-green">
-                                </small> 
-                            </div>
                             <button class="bps-btn btn btn-primary" type="submit">Add book</button>
                         </form>
                     </div>
@@ -162,7 +149,7 @@
                                     </div>
                                     <div class="col-sm-9">
                                         <div>{{ book.title }}</div>
-                                        <div><h5 class="text-muted-green">{{ book.get_short_description() | safe }}</h5></div>
+                                        <div><h5 class="text-muted-green">{{ book.short_description | safe }}</h5></div>
                                     </div>
                                 </div>
                             </a>
@@ -175,7 +162,8 @@
                 <div id="found-book-{{ loop.index }}" class="panel-collapse collapse out">
                     <div class="panel-body">
                         <form method="POST" action="{{ url_for('books.add_book') }}">
-                            <input name="book_id" class="hidden" value="{{ loop.index - 1 }}">
+                            <input name="preview_url" class="hidden" value="{{ book.preview_url }}">
+                            <input name="thumbnail_url" class="hidden" value="{{ book.thumbnail_url }}">
                             <div class="form-group">
                                 <label for="ma-isbn13"><span  class="glyphicon glyphicon-barcode"></span> ISBN 13</label>
                                 <input class="form-control" type="text" id="ma-isbn13" name="isbn13" 
@@ -212,72 +200,23 @@
                             </div>
                             <div class="form-group">
                                 <label for="ma-author">Author</label>
-                                <input id="ma-author" class="form-control" type="text" name="book_author" 
+                                <input id="ma-author" class="form-control" type="text" name="book_authors" 
                                         placeholder="Enter name of the author(s)"
-                                        value="{{ book.get_author_name() }}">
+                                        value="{{ book.authors_names }}">
                                 <small class="form-text text-muted-green">
                                     Separate multiple authors with a comma e.g. Jane Bloggs, John Smith
                                 </small> 
                             </div>
                             <div class="form-group">
                                 <label for="ma-category">Category</label>
-                                <input id="ma-category" class="form-control" type="text" name="book_category" 
+                                <input id="ma-category" class="form-control" type="text" name="book_categories" 
                                         placeholder="Enter category"
-                                        value="{{ book.get_category_name() }}"> 
+                                        value="{{ book.categories_names }}"> 
                                 <small class="form-text text-muted-green">
                                     Separate multiple categories with a comma e.g. Nonfiction, Animals
                                 </small> 
                             </div>
-                            <div class="form-group">
-                                <label for="ma-reading-level">Reading Level</label>
-                                <select id="ma-reading-level" class="form-control" type="text" name="book_level" 
-                                        aria-describedby="ma-reading-level-help">
-                                    <option value="-1" selected="selected" class="text-muted-grey">
-                                        Select a level</option>
-                                    <option value="1">1</option>
-                                    <option value="2">2</option>
-                                    <option value="3">3</option>
-                                </select>
-                                <small id="ma-reading-level-help" class="help-block text-muted-green">
-                                </small> 
-                            </div>
                             <button class="bps-btn btn btn-primary" type="submit">Add book</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
- <!-- Found books 2 -->
-    <div class="container-fluid">
-        <div class="panel-group" id="found-books-2">
-            {% for book_2 in found_books_2 %}
-            <div class="panel panel-default">
-                <div class="panel-heading">
-                    <h4 class="panel-title">
-                        <div class="container">
-                            <a data-toggle="collapse" data-parent="#found-books-2" href="#found-book-2-{{ loop.index }}" >
-                                <div class="row">
-                                    <span class="glyphicon glyphicon-plus" style="float: left;"></span>
-                                    <span class="col-sm-4">{{ book_2.isbn13 }}</span>
-                                    <span class="col-sm-7">{{ book_2.title }}</span>
-                                </div>
-                            </a>
-                        </div>
-                    </h4>
-                </div>
-                <div id="found-book-2-{{ loop.index }}" class="panel-collapse collapse out">
-                    <div class="panel-body">
-                        <form method="POST" action="{{ url_for('books.add_book') }}">
-                            <div class="form-group col-xs-8">
-                                <label>Description</label>
-                                <textarea name="description" rows="5" class="form-control">{{ book_2.description | safe }}</textarea>
-                            </div>
-                            <div class="col-xs-4">
-                                <img class="img-responsive img-thumbnail" src='{{ book_2.thumbnail_url | safe }}'>
-                            </div>
-                            
                         </form>
                     </div>
                 </div>

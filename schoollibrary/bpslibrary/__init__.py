@@ -28,12 +28,11 @@ Model.metadata.create_all(bind=engine)
 from bpslibrary.views import books, index   # noqa
 app.register_blueprint(books.mod)
 app.register_blueprint(index.mod)
-    
+
 
 @app.teardown_appcontext
 def shutdown_session(exception=None):
-    '''Removes the db session when application is terminated'''
-
+    """Removes the db session when application is terminated"""
     db_session.remove()
 
 # Foundation(app)
