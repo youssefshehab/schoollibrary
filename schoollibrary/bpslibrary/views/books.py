@@ -1,16 +1,14 @@
-"""Handles book repository functionalities"""
+"""Handle book repository functionalities."""
 
 # pylint: disable=C0103
 
-import urllib.parse
 from urllib import request as urllib_request
-import os.path
-from flask import Blueprint, render_template, jsonify, request
+import urllib.parse
+import re
+import requests
+from flask import Blueprint, render_template, request
 from bpslibrary import db_session
 from bpslibrary.models import Author, Book, Category
-from bpslibrary.forms import BookForm
-import requests
-import re
 
 
 mod = Blueprint('books', __name__, url_prefix='/books')
@@ -18,15 +16,13 @@ mod = Blueprint('books', __name__, url_prefix='/books')
 
 @mod.route('/')
 def index():
-    """Default landing page for books"""
-
+    """Render the default landing page for books."""
     return render_template('books.html')
 
 
 @mod.route('/lookup', methods=['GET', 'POST'])
 def lookup_book():
-    """Looks up book details online"""
-
+    """Look up book details online."""
     error = None
 
     if request.method == 'GET':
@@ -47,11 +43,10 @@ def lookup_book():
 
 
 def query_google_books(isbn, title):
-    """Looks up a book on google books api"""
-
+    """Look up a book on google books api."""
+    search_query = ''
     api_url = 'https://www.googleapis.com/books/v1/volumes?q={}&printType=books'
 
-    search_query = ''
     if title and title.strip():
         search_query = '+intitle:' + urllib.parse.quote_plus(title)
     if isbn and isbn.strip():
@@ -119,8 +114,7 @@ def query_google_books(isbn, title):
 
 @mod.route('/add', methods=['POST'])
 def add_book():
-    """Adds a book to the library."""
-
+    """Add a book to the library."""
     book = Book()
     book.title = request.form['book_title'].strip()
     book.isbn10 = request.form['isbn10'].strip()
@@ -142,12 +136,14 @@ def add_book():
             category = Category(category_name)
         book.categories.append(category)
 
-    image_name = "".join([c for c in book.title.replace(' ', '_')
-                          if re.match(r'\w', c)]) + '.jpg'
+    thumbnail_url = request.form['thumbnail_url'].strip()
+    if thumbnail_url:
+        image_name = ''.join([c for c in book.title.replace(' ', '_')
+                              if re.match(r'\w', c)]) + '.jpg'
 
-    img = open('bpslibrary/static/img/' + image_name, 'wb')
-    img.write(urllib_request.urlopen(request.form['thumbnail_url'].strip()).read())
-    book.thumbnail_url = image_name
+        img = open('bpslibrary/static/img/' + image_name, 'wb')
+        img.write(urllib_request.urlopen(thumbnail_url).read())
+        book.thumbnail_url = image_name
 
     dbsession = db_session()
     dbsession.add(book)
@@ -157,11 +153,12 @@ def add_book():
 
 
 def validate_add_book():
+    """Validate books on addition or modification."""
     return None
 
 
 @mod.route('/view', methods=['GET'])
-def view_book():
-    """Displays all books in the library"""
+def view_books():
+    """Display all books in the library."""
     books = Book.query.all()
     return render_template('view_book.html', books=books)
