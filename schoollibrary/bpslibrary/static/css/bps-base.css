@@ -65,7 +65,7 @@ body {
 
 .logo {
     /*
-    display: block;
+    display: inline-block;;
     right: 5px;
     top: 120px;
     */
@@ -91,6 +91,6 @@ body {
 */
 
 .caret{
-        transform:rotate(-90deg);
-        transition:all 0.3s ease-in-out;
-    }
+    transform:rotate(-90deg);
+    transition:all 0.3s ease-in-out;
+}

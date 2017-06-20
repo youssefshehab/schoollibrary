@@ -1,11 +1,9 @@
-"""The entities in the library"""
+"""The library system entities."""
 
 
-from sqlalchemy import (Column, String, Integer, Sequence,
-                        ForeignKey, Binary, Table)
+from sqlalchemy import Column, String, Integer, Sequence, ForeignKey, Table
 from sqlalchemy.orm import relationship
-# from sqlalchemy.ext.declarative import declarative_base
-from bpslibrary import Model, db_session
+from bpslibrary import Model
 
 # Associations
 book_author_association = \
@@ -24,7 +22,7 @@ book_category_association = \
 
 
 class ClassRoom(Model):
-    """A school class"""
+    """A school class."""
 
     # orm required fields
     __tablename__ = 'class_rooms'
@@ -47,7 +45,7 @@ class ClassRoom(Model):
 
 
 class Pupil(Model):
-    """A pupil in the school"""
+    """A pupil in the school."""
 
     # orm required fields
     __tablename__ = 'pupils'
@@ -68,7 +66,7 @@ class Pupil(Model):
 
 
 class Category(Model):
-    """Category of a book"""
+    """Category of a book."""
 
     # orm required fields
     __tablename__ = 'categories'
@@ -87,6 +85,7 @@ class Category(Model):
                          back_populates='categories')
 
     def __init__(self, name):
+        """Initialise a new Category object."""
         self.name = name
 
     def __repr__(self):
@@ -94,7 +93,7 @@ class Category(Model):
 
 
 class Author(Model):
-    """A book author"""
+    """A book author."""
 
     # orm required fields
     __tablename__ = 'authors'
@@ -120,7 +119,7 @@ class Author(Model):
 
 
 class Book(Model):
-    """A book in the library"""
+    """A book in the library."""
 
     # orm required fields
     __tablename__ = 'books'
@@ -138,7 +137,7 @@ class Book(Model):
     preview_url = Column(String)
     availability = Column(String)
 
-    # relaationships
+    # relationships
     categories = relationship('Category',
                               secondary=book_category_association,
                               back_populates='books')
@@ -149,7 +148,7 @@ class Book(Model):
 
     @property
     def authors_names(self):
-        """The names of the author(s) separated by comma"""
+        """Names of the author(s) separated by comma."""
         if len(self.authors) > 1:
             return ", ".join([a.name for a in self.authors])
         elif len(self.authors) == 1:
@@ -157,7 +156,7 @@ class Book(Model):
 
     @property
     def categories_names(self):
-        """The names of the categories seperated by comma"""
+        """Names of the categories seperated by comma."""
         if len(self.categories) > 1:
             return ", ".join([c.name for c in self.categories])
         elif len(self.categories) == 1:
@@ -165,7 +164,7 @@ class Book(Model):
 
     @property
     def short_description(self):
-        """The first 150 characters from the description"""
+        """First 150 characters from the description."""
         if self.description and self.description.strip():
             return self.description[:150] + "..."
         else:

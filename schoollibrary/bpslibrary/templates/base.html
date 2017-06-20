@@ -19,15 +19,24 @@
     </head>
     <body>
         <div class="container-fluid">
-            <!--<div class="top-navi">{% block top_nav %}{% endblock top_nav %}</div>
-            <div class="message-bar">{% block message_bar %}{% endblock message_bar %}</div>-->
+            <nav class="navbar">
+                <div class="container">
+                    <div class="navbar-header">
+                        <a class="navbar-brand" href="/">
+                            BPS Library
+                        </a>
+                    </div>
+
+                </div>
+            </nav>
+            <!--<div class="message-bar">{% block message_bar %}{% endblock message_bar %}</div>-->
             <div class="container-fluid">
-                <img class="logo img-responsive" src="{{ url_for('static', filename='img/bps_logo_trans_shadow.png') }}" />
+                <img class="logo img-responsive container" src="{{ url_for('static', filename='img/bps_logo_trans_shadow.png') }}" />
             </div>
-            <div id="content" class="container-fluid">{% block content %}some text of some sort{% endblock content %}</div>
+            <div id="content" class="container-fluid">{% block content %}{% endblock content %}</div>
         </div>
     </body>
-    <footer class="bps-footer">
+    <footer class="bps-footer navbar-fixed-bottom">
             <div class="container">
                 <p class="text-muted-green">&copy; 2017 by Youssef Shehab</p>
             </div>
