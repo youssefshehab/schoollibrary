@@ -5,7 +5,7 @@ mod = Blueprint('index', __name__)
 
 @mod.route('/')
 def index():
-    return render_template('base.html')
+    return render_template('home.html')
 
 
 @mod.route('/foundation')

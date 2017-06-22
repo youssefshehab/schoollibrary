@@ -20,210 +20,210 @@
             });
     </script>
 {% endblock %}
+{% block header %}Add Books{% endblock %}
 {% block content %}
-    <div class="container-fluid">
-        <h1 class="text-primary">Add a book to the library</h1>
-        <div id="add-book" class="panel-group">
-            <div class="panel panel-info">
-                <div class="panel-heading">
-                    <h3 class="panel-title text-info">
-                        <div class="container-fluid">
-                            <a data-toggle="collapse" data-parent="#add-book" href="#lookup-panel">
-                                Lookup a book
-                            </a>
-                        </div>
-                    </h3>
-                </div>
-                <div id="lookup-panel" class="panel-collapse collapse in">
-                    <div class="panel-body">
-                        <form name="lookup_book" method="POST" action="{{ url_for('books.lookup_book') }}" >
-                            <h3 class="text-info">Lookup a book</h3>
-                            <br>
-                            <div class="form-group">
-                                <label class="text-default" for="lkp-isbn">
-                                    <span class="glyphicon glyphicon-barcode"></span> ISBN
-                                </label>
-                                <input class="form-control" type="text" id="lkp-isbn" name="isbn" 
-                                        placeholder="Enter the ISBN e.g. 9781509804757" value="{{ search_isbn }}">
-                                <small class="text-muted-green">
-                                    Either the 10 or 13 digits long ISBN without hyphens (-) or spaces
-                                </small> 
-                            </div>
-                            <div class="form-group">
-                                <label for="lkp-book-title">Title</label>
-                                <input id="lkp-book-title" class="form-control" type="text" name="book_title" 
-                                        placeholder="Enter book title" value="{{ search_title }}">
-                                <small class="text-muted-green">Not needed if the ISBN is provided</small>
-                            </div>
-                            <button class="bps-btn btn btn-primary" type="submit">Lookup book details</button>
-                        </form>
+<div class="container-fluid">
+    <div id="add-book" class="panel-group">
+        <div class="panel panel-info">
+            <div class="panel-heading">
+                <h3 class="panel-title text-info">
+                    <div class="container-fluid">
+                        <a data-toggle="collapse" data-parent="#add-book" href="#lookup-panel">
+                            Lookup a book
+                        </a>
                     </div>
+                </h3>
+            </div>
+            <div id="lookup-panel" class="panel-collapse collapse in">
+                <div class="panel-body">
+                    <form name="lookup_book" method="POST" action="{{ url_for('books.lookup_book') }}" >
+                        <h3 class="text-info">Lookup a book</h3>
+                        <br>
+                        <div class="form-group">
+                            <label class="text-default" for="lkp-isbn">
+                                <span class="glyphicon glyphicon-barcode"></span> ISBN
+                            </label>
+                            <input class="form-control" type="text" id="lkp-isbn" name="isbn" 
+                                    placeholder="Enter the ISBN e.g. 9781509804757" value="{{ search_isbn }}">
+                            <small class="text-muted-green">
+                                Either the 10 or 13 digits long ISBN without hyphens (-) or spaces
+                            </small> 
+                        </div>
+                        <div class="form-group">
+                            <label for="lkp-book-title">Title</label>
+                            <input id="lkp-book-title" class="form-control" type="text" name="book_title" 
+                                    placeholder="Enter book title" value="{{ search_title }}">
+                            <small class="text-muted-green">Not needed if the ISBN is provided</small>
+                        </div>
+                        <button class="bps-btn btn btn-primary" type="submit">Lookup book details</button>
+                    </form>
                 </div>
             </div>
-            <!-- Manual add book -->
-            <div class="panel panel-info">
-                <div class="panel-heading">
-                    <h3 class="panel-title text-info">
-                        <div class="container-fluid">
-                            <a data-toggle="collapse" data-parent="#add-book" href="#manual-add-panel">
-                                <span class="text-info">Enter book detials</span>
-                            </a>
-                        </div>
-                    </h3>
-                </div>
-                <div id="manual-add-panel" class="panel-collapse collapse">
-                    <div class="panel-body">
-                        <form name="manual_add_book" method="POST" action="{{ url_for('books.add_book') }}" >
-                            <h3 class="text-info">Enter book detials</h3>
-                            <br>
-                            <div class="form-group">
-                                <label for="ma-isbn13"><span  class="glyphicon glyphicon-barcode"></span> ISBN 13</label>
-                                <input class="form-control" type="text" id="ma-isbn13" name="isbn13" 
-                                        aria-describedby="ma-isbn13-help"
-                                        placeholder="Enter the 13 digit ISBN e.g. 9781509804757">
-                                <small id="ma-isbn13-help" class="help-block text-muted-green">
-                                    Enter the 13 digit long ISBN without hyphens (-) or spaces
-                                </small>
-                            </div>
-                            <div class="form-group">
-                                <label for="ma-isbn10"><span  class="glyphicon glyphicon-barcode"></span> ISBN 10</label>
-                                <input class="form-control" type="text" id="ma-isbn10" name="isbn10" 
-                                        aria-describedby="ma-isbn10-help" 
-                                        placeholder="Enter the 10 digit ISBN e.g. 1509804757">
-                                <small id="ma-isbn10-help" class="help-block text-muted-green">
-                                    Enter the 10 digit long ISBN without hyphens (-) or spaces
-                                </small> 
-                            </div>
-                            <div class="form-group">
-                                <label for="ma-book-title">Title</label>
-                                <input id="ma-book-title" class="form-control" type="text" name="book_title" 
-                                        placeholder="Enter book title"> 
-                            </div>
-                            <div class="form-group">
-                                <label for="ma-description">Description</label>
-                                <textarea id="ma-description" class="form-control" rows="5" name="book_description" 
-                                        aria-describedby="ma-description-help"></textarea>
-                                <small id="ma-description-help" class="help-block text-muted-green">
-                                    This is the blurb usually on the back of the book
-                                </small>
-                            </div>
-                            <div class="form-group">
-                                <label for="ma-author">Author</label>
-                                <input id="ma-author" class="form-control" type="text" name="book_author" 
-                                        placeholder="Enter name of the author(s)">
-                                <small class="form-text text-muted-green">
-                                    Separate multiple authors with a comma e.g. Jane Bloggs, John Smith
-                                </small> 
-                            </div>
-                            <div class="form-group">
-                                <label for="ma-category">Category</label>
-                                <input id="ma-category" class="form-control" type="text" name="book_category" 
-                                        placeholder="Enter category"> 
-                                <small class="form-text text-muted-green">
-                                    Separate multiple categories with a comma e.g. Nonfiction, Animals
-                                </small> 
-                            </div>
-                            <button class="bps-btn btn btn-primary" type="submit">Add book</button>
-                        </form>
+        </div>
+        <!-- Manual add book -->
+        <div class="panel panel-info">
+            <div class="panel-heading">
+                <h3 class="panel-title text-info">
+                    <div class="container-fluid">
+                        <a data-toggle="collapse" data-parent="#add-book" href="#manual-add-panel">
+                            <span class="text-info">Enter book detials</span>
+                        </a>
                     </div>
+                </h3>
+            </div>
+            <div id="manual-add-panel" class="panel-collapse collapse">
+                <div class="panel-body">
+                    <form name="manual_add_book" method="POST" action="{{ url_for('books.add_book') }}" >
+                        <h3 class="text-info">Enter book detials</h3>
+                        <br>
+                        <div class="form-group">
+                            <label for="ma-isbn13"><span  class="glyphicon glyphicon-barcode"></span> ISBN 13</label>
+                            <input class="form-control" type="text" id="ma-isbn13" name="isbn13" 
+                                    aria-describedby="ma-isbn13-help"
+                                    placeholder="Enter the 13 digit ISBN e.g. 9781509804757">
+                            <small id="ma-isbn13-help" class="help-block text-muted-green">
+                                Enter the 13 digit long ISBN without hyphens (-) or spaces
+                            </small>
+                        </div>
+                        <div class="form-group">
+                            <label for="ma-isbn10"><span  class="glyphicon glyphicon-barcode"></span> ISBN 10</label>
+                            <input class="form-control" type="text" id="ma-isbn10" name="isbn10" 
+                                    aria-describedby="ma-isbn10-help" 
+                                    placeholder="Enter the 10 digit ISBN e.g. 1509804757">
+                            <small id="ma-isbn10-help" class="help-block text-muted-green">
+                                Enter the 10 digit long ISBN without hyphens (-) or spaces
+                            </small> 
+                        </div>
+                        <div class="form-group">
+                            <label for="ma-book-title">Title</label>
+                            <input id="ma-book-title" class="form-control" type="text" name="book_title" 
+                                    placeholder="Enter book title"> 
+                        </div>
+                        <div class="form-group">
+                            <label for="ma-description">Description</label>
+                            <textarea id="ma-description" class="form-control" rows="5" name="book_description" 
+                                    aria-describedby="ma-description-help"></textarea>
+                            <small id="ma-description-help" class="help-block text-muted-green">
+                                This is the blurb usually on the back of the book
+                            </small>
+                        </div>
+                        <div class="form-group">
+                            <label for="ma-author">Author</label>
+                            <input id="ma-author" class="form-control" type="text" name="book_author" 
+                                    placeholder="Enter name of the author(s)">
+                            <small class="form-text text-muted-green">
+                                Separate multiple authors with a comma e.g. Jane Bloggs, John Smith
+                            </small> 
+                        </div>
+                        <div class="form-group">
+                            <label for="ma-category">Category</label>
+                            <input id="ma-category" class="form-control" type="text" name="book_category" 
+                                    placeholder="Enter category"> 
+                            <small class="form-text text-muted-green">
+                                Separate multiple categories with a comma e.g. Nonfiction, Animals
+                            </small> 
+                        </div>
+                        <button class="bps-btn btn btn-primary" type="submit">Add book</button>
+                    </form>
                 </div>
             </div>
         </div>
     </div>
-    <!-- Found books -->
-    <div class="container-fluid">
-        <div class="panel-group" id="found_books">
-            {% for book in found_books %}
-            <div class="panel panel-default">
-                <div class="panel-heading">
-                    <h4 class="panel-title">
-                        <div class="container">
-                            <a data-toggle="collapse" data-parent="#found_books" href="#found-book-{{ loop.index }}" >
-                                <div class="row">
-                                    <div class="col-sm-2">
-                                        <img class="img-responsive img-thumbnail" src="{{ book.thumbnail_url }}">
-                                    </div>
-                                    <div>
-                                        <br>
-                                        <span class="glyphicon glyphicon-expand pull-left"> </span>
-                                    </div>
-                                    <div class="col-sm-9">
-                                        <div>{{ book.title }}</div>
-                                        <div><h5 class="text-muted-green">{{ book.short_description | safe }}</h5></div>
-                                    </div>
+</div>
+<!-- Found books -->
+
+    <div class="panel-group" id="found_books">
+        {% for book in found_books %}
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h4 class="panel-title">
+                    <div class="container-fluid">
+                        <a data-toggle="collapse" data-parent="#found_books" href="#found-book-{{ loop.index }}" >
+                            <div class="row">
+                                <div class="col-sm-2">
+                                    <img class="img-responsive img-thumbnail" src="{{ book.thumbnail_url }}">
                                 </div>
-                            </a>
+                                <div>
+                                    <br>
+                                    <span class="glyphicon glyphicon-expand pull-left"> </span>
+                                </div>
+                                <div class="col-sm-9">
+                                    <div>{{ book.title }}</div>
+                                    <div><h5 class="text-muted-green">{{ book.short_description | safe }}</h5></div>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </h4>
+                <div>
+                    <a class="col-xs-offset-2" href="{{ book.preview_url }}" target="blank">Preview on google books >></a>
+                </div>
+            </div>        
+            <div id="found-book-{{ loop.index }}" class="panel-collapse collapse out">
+                <div class="panel-body">
+                    <form method="POST" action="{{ url_for('books.add_book') }}">
+                        <input name="preview_url" class="hidden" value="{{ book.preview_url }}">
+                        <input name="thumbnail_url" class="hidden" value="{{ book.thumbnail_url }}">
+                        <div class="form-group">
+                            <label for="ma-isbn13"><span  class="glyphicon glyphicon-barcode"></span> ISBN 13</label>
+                            <input class="form-control" type="text" id="ma-isbn13" name="isbn13" 
+                                    aria-describedby="ma-isbn13-help"
+                                    placeholder="Enter the 13 digit ISBN e.g. 9781509804757"
+                                    value="{{ book.isbn13 }}">
+                            <small id="ma-isbn13-help" class="help-block text-muted-green">
+                                The 13 digit long ISBN without hyphens (-) or spaces
+                            </small>
                         </div>
-                    </h4>
-                    <div>
-                        <a class="col-xs-offset-2" href="{{ book.preview_url }}" target="blank">Preview on google books >></a>
-                    </div>
-                </div>        
-                <div id="found-book-{{ loop.index }}" class="panel-collapse collapse out">
-                    <div class="panel-body">
-                        <form method="POST" action="{{ url_for('books.add_book') }}">
-                            <input name="preview_url" class="hidden" value="{{ book.preview_url }}">
-                            <input name="thumbnail_url" class="hidden" value="{{ book.thumbnail_url }}">
-                            <div class="form-group">
-                                <label for="ma-isbn13"><span  class="glyphicon glyphicon-barcode"></span> ISBN 13</label>
-                                <input class="form-control" type="text" id="ma-isbn13" name="isbn13" 
-                                        aria-describedby="ma-isbn13-help"
-                                        placeholder="Enter the 13 digit ISBN e.g. 9781509804757"
-                                        value="{{ book.isbn13 }}">
-                                <small id="ma-isbn13-help" class="help-block text-muted-green">
-                                    The 13 digit long ISBN without hyphens (-) or spaces
-                                </small>
-                            </div>
-                            <div class="form-group">
-                                <label for="ma-isbn10"><span  class="glyphicon glyphicon-barcode"></span> ISBN 10</label>
-                                <input class="form-control" type="text" id="ma-isbn10" name="isbn10" 
-                                        aria-describedby="ma-isbn10-help" 
-                                        placeholder="Enter the 10 digit ISBN e.g. 1509804757"
-                                        value="{{ book.isbn10 }}">
-                                <small id="ma-isbn10-help" class="help-block text-muted-green">
-                                    The 10 digit long ISBN without hyphens (-) or spaces
-                                </small> 
-                            </div>
-                            <div class="form-group">
-                                <label for="ma-book-title">Title</label>
-                                <input id="ma-book-title" class="form-control" type="text" name="book_title" 
-                                        placeholder="Enter book title"
-                                        value="{{ book.title }}"> 
-                            </div>
-                            <div class="form-group">
-                                <label for="ma-description">Description</label>
-                                <textarea id="ma-description" class="form-control" rows="5" name="book_description" 
-                                        aria-describedby="ma-description-help">{{ book.description | safe }}</textarea>
-                                <small id="ma-description-help" class="help-block text-muted-green">
-                                    This is the blurb usually on the back of the book
-                                </small>
-                            </div>
-                            <div class="form-group">
-                                <label for="ma-author">Author</label>
-                                <input id="ma-author" class="form-control" type="text" name="book_authors" 
-                                        placeholder="Enter name of the author(s)"
-                                        value="{{ book.authors_names }}">
-                                <small class="form-text text-muted-green">
-                                    Separate multiple authors with a comma e.g. Jane Bloggs, John Smith
-                                </small> 
-                            </div>
-                            <div class="form-group">
-                                <label for="ma-category">Category</label>
-                                <input id="ma-category" class="form-control" type="text" name="book_categories" 
-                                        placeholder="Enter category"
-                                        value="{{ book.categories_names }}"> 
-                                <small class="form-text text-muted-green">
-                                    Separate multiple categories with a comma e.g. Nonfiction, Animals
-                                </small> 
-                            </div>
-                            <button class="bps-btn btn btn-primary" type="submit">Add book</button>
-                        </form>
-                    </div>
+                        <div class="form-group">
+                            <label for="ma-isbn10"><span  class="glyphicon glyphicon-barcode"></span> ISBN 10</label>
+                            <input class="form-control" type="text" id="ma-isbn10" name="isbn10" 
+                                    aria-describedby="ma-isbn10-help" 
+                                    placeholder="Enter the 10 digit ISBN e.g. 1509804757"
+                                    value="{{ book.isbn10 }}">
+                            <small id="ma-isbn10-help" class="help-block text-muted-green">
+                                The 10 digit long ISBN without hyphens (-) or spaces
+                            </small> 
+                        </div>
+                        <div class="form-group">
+                            <label for="ma-book-title">Title</label>
+                            <input id="ma-book-title" class="form-control" type="text" name="book_title" 
+                                    placeholder="Enter book title"
+                                    value="{{ book.title }}"> 
+                        </div>
+                        <div class="form-group">
+                            <label for="ma-description">Description</label>
+                            <textarea id="ma-description" class="form-control" rows="5" name="book_description" 
+                                    aria-describedby="ma-description-help">{{ book.description | safe }}</textarea>
+                            <small id="ma-description-help" class="help-block text-muted-green">
+                                This is the blurb usually on the back of the book
+                            </small>
+                        </div>
+                        <div class="form-group">
+                            <label for="ma-author">Author</label>
+                            <input id="ma-author" class="form-control" type="text" name="book_authors" 
+                                    placeholder="Enter name of the author(s)"
+                                    value="{{ book.authors_names }}">
+                            <small class="form-text text-muted-green">
+                                Separate multiple authors with a comma e.g. Jane Bloggs, John Smith
+                            </small> 
+                        </div>
+                        <div class="form-group">
+                            <label for="ma-category">Category</label>
+                            <input id="ma-category" class="form-control" type="text" name="book_categories" 
+                                    placeholder="Enter category"
+                                    value="{{ book.categories_names }}"> 
+                            <small class="form-text text-muted-green">
+                                Separate multiple categories with a comma e.g. Nonfiction, Animals
+                            </small> 
+                        </div>
+                        <button class="bps-btn btn btn-primary" type="submit">Add book</button>
+                    </form>
                 </div>
             </div>
-            {% endfor %}
         </div>
+        {% endfor %}
     </div>
+
    
 
 {% endblock content %}
