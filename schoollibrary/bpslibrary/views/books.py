@@ -6,6 +6,8 @@ from urllib import request as urllib_request
 import urllib.parse
 import re
 import requests
+import logging
+import sys
 from flask import Blueprint, render_template, request
 from bpslibrary import db_session
 from bpslibrary.models import Author, Book, Category
@@ -29,16 +31,20 @@ def lookup_book():
         return render_template('add_book.html')
 
     if request.method == 'POST':
-        isbn = request.form['isbn'].strip()
-        book_title = request.form['book_title'].strip()
+        try:
+            isbn = request.form['isbn'].strip()
+            book_title = request.form['book_title'].strip()
 
-        if isbn or book_title:
-            found_books = query_google_books(isbn, book_title)
+            if isbn or book_title:
+                found_books = query_google_books(isbn, book_title)
 
-        lookup_results = render_template('add_book.html',
-                                         found_books=found_books,
-                                         search_title=book_title,
-                                         search_isbn=isbn)
+                lookup_results = render_template('add_book.html',
+                                                 found_books=found_books,
+                                                 search_title=book_title,
+                                                 search_isbn=isbn)
+        except:
+            error = sys.exc_info()[0]
+            lookup_results = render_template('add_book.html')
         return lookup_results
 
 
@@ -82,7 +88,7 @@ def query_google_books(isbn, title):
                 book.description = vol_info['description']
 
             # isbn(s)
-            if 'description' in vol_info.keys():
+            if 'industryIdentifiers' in vol_info.keys():
                 for ident in vol_info['industryIdentifiers']:
                     if ident['type'] == 'ISBN_13':
                         book.isbn13 = ident['identifier']
@@ -139,7 +145,7 @@ def add_book():
     thumbnail_url = request.form['thumbnail_url'].strip()
     if thumbnail_url:
         image_name = ''.join([c for c in book.title.replace(' ', '_')
-                              if re.match(r'\w', c)]) + '.jpg'
+                              if re.match(r'\w', c)]) + book.isbn13 + '.jpg'
 
         img = open('bpslibrary/static/img/' + image_name, 'wb')
         img.write(urllib_request.urlopen(thumbnail_url).read())
@@ -160,5 +166,14 @@ def validate_add_book():
 @mod.route('/view', methods=['GET'])
 def view_books():
     """Display all books in the library."""
-    books = Book.query.all()
+    session = db_session()
+    books = session.query(Book).order_by(Book.title)
+    return render_template('view_book.html', books=books)
+
+
+@mod.route('/find', methods=['GET', 'POST'])
+def find_books():
+    """Find books in the library based on the search term."""
+    session = db_session()
+    books = session.query(Book).order_by(Book.title)
     return render_template('view_book.html', books=books)

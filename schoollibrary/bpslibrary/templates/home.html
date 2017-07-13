@@ -3,42 +3,39 @@
 Broadheath Primary School Library
 {% endblock %}
 {% block content %}
-<div class="ui-widget">
-    <label for="tags">Tags: </label>
-    <input id="tags">
-</div>
+
+    <div class="secondary">
+    <p class="size-21 text-center">
+        Welcome to Broadheath Primary School Library System.
+        <br>
+        Here you can search for and find books in the library, read about books and their authors and borrow books.
+        <br>
+    </p>
+    </div>
+    <div class="text-center">
+        <form name="find_books" method="POST" action="{{ url_for('books.find_books') }}" >
+            <h3 class="text-info">Search for a book</h3>
+            <div class="form-group">
+                <input class="center-block" type="text" id="search_box" name="search_box" value="{{ search_term }}">
+                <small class="text-muted-green">
+                    Enter book title, author or category
+                </small> 
+            </div>
+            <button class="bps-btn btn btn-primary" type="submit">Find books</button>
+        </form>
+    </div>
+
 {% endblock %}
 {% block scripts %}
 {{ super() }}
 <script>
-    $( function() {
-        var availableTags = [
-        "ActionScript",
-        "AppleScript",
-        "Asp",
-        "BASIC",
-        "C",
-        "C++",
-        "Clojure",
-        "COBOL",
-        "ColdFusion",
-        "Erlang",
-        "Fortran",
-        "Groovy",
-        "Haskell",
-        "Java",
-        "JavaScript",
-        "Lisp",
-        "Perl",
-        "PHP",
-        "Python",
-        "Ruby",
-        "Scala",
-        "Scheme"
-        ];
 
-        $( "#tags" ).autocomplete({
-            source: availableTags
+    
+    $( function() {
+        var searchTerms = {{ search_terms | safe}};
+
+        $( "#search_box" ).autocomplete({
+            source: searchTerms
         });
     } );
   </script>

@@ -21,24 +21,24 @@ book_category_association = \
           extend_existing=True)
 
 
-class ClassRoom(Model):
+class Classroom(Model):
     """A school class."""
 
     # orm required fields
-    __tablename__ = 'class_rooms'
+    __tablename__ = 'classrooms'
     __table_args__ = {'extend_existing': True}
     id = Column(Integer,
-                Sequence('class_rooms_seq', start=0, increment=1),
+                Sequence('classrooms_seq', start=0, increment=1),
                 primary_key=True)
 
     # columns
     name = Column(String, unique=True)
     year = Column(Integer, nullable=False)
-    username = Column(String, unique=True)
-    password = Column(String, nullable=False)
+    username = Column(String(50), unique=True)
+    password = Column(String(50), nullable=False)
 
     # relationships
-    pupils = relationship('Pupil', back_populates='class_room')
+    pupils = relationship('Pupil', back_populates='classroom')
 
     def __repr__(self):
         return "<Class %r>" % self.name
@@ -58,8 +58,8 @@ class Pupil(Model):
     name = Column(String, nullable=False)
 
     # relationships
-    class_room_id = Column(Integer, ForeignKey('class_rooms.id'))
-    class_room = relationship('ClassRoom', back_populates='pupils')
+    classroom_id = Column(Integer, ForeignKey('classrooms.id'))
+    classroom = relationship('Classroom', back_populates='pupils')
 
     def __repr__(self):
         return "<Pupil %r>" % self.name
