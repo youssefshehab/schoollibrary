@@ -35,12 +35,13 @@ class Classroom(Model):
     # columns
     name = Column(String, unique=True)
     year = Column(Integer, nullable=False)
-    username = Column(String(50), unique=True)
-    password = Column(String(50), nullable=False)
 
     # relationships
     pupils = relationship('Pupil', back_populates='classroom')
 
+    def __init__(self, name):
+        self.name = name
+    
     def __repr__(self):
         return "<Class %r>" % self.name
 
@@ -61,6 +62,9 @@ class Pupil(Model):
     # relationships
     classroom_id = Column(Integer, ForeignKey('classrooms.id'))
     classroom = relationship('Classroom', back_populates='pupils')
+
+    def __init__(self, name):
+        self.name = name
 
     def __repr__(self):
         return "<Pupil %r>" % self.name

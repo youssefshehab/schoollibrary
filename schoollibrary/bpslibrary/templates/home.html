@@ -21,15 +21,16 @@ Broadheath Primary School Library
         <form name="find_books" method="POST" action="{{ url_for('books.find_books') }}" >
             <h3 class="text-info">Search for a book</h3>
             <div class="form-group">
-                <input  class="center-block text-center" 
-                        type="text" 
-                        id="search_box" 
-                        name="search_term" 
-                        value="{{ search_term }}"
-                        autofocus="true">
                 <small class="text-muted-green">
                     Enter book title, author name or category
                 </small> 
+                <input  class="center-block text-center" 
+                        type="text" 
+                        id="search_box" 
+                        name="search_term"
+                        value="{{ search_term }}"
+                        autofocus="true">
+
             </div>
             <button class="bps-btn btn btn-primary" type="submit">Find books</button>
         </form>

@@ -15,6 +15,7 @@ from bpslibrary.models import Author, Book, Category
 
 
 mod = Blueprint('books', __name__, url_prefix='/books')
+IMG_DIR = 'bpslibrary/static/img/'
 
 
 @mod.route('/')
@@ -25,9 +26,10 @@ def index():
 
 @mod.route('/lookup', methods=['GET', 'POST'])
 def lookup_book():
-    """Look up book details online."""
-    error = None
-
+    """Look up book details online.
+    
+    GET request are for displaying the 
+    """
     if request.method == 'GET':
         return render_template('add_book.html')
 
@@ -45,16 +47,21 @@ def lookup_book():
                                                  search_title=book_title,
                                                  search_isbn=isbn,
                                                  username="Youssef")
-        except:
-            error = sys.exc_info()[0]
-            flash("Something has gone wrong! <br>" + str(error), 'error')
+        except Exception as e:
+            flash("Something has gone wrong! <br>" + str(e), 'error')
         return lookup_results
 
 
 def query_google_books(isbn: str, title: str):
-    """Look up a book on google books api."""
+    """Look up a book on google books api.
+
+    This method uses the `Volumes: list` method. It is designed for v1
+    of the API.
+    (https://developers.google.com/books/docs/v1/reference/volumes/list)
+    """
     search_query = ''
-    api_url = 'https://www.googleapis.com/books/v1/volumes?q={}&printType=books'
+    api_url = \
+        'https://www.googleapis.com/books/v1/volumes?q={}&printType=books'
 
     if title and title.strip():
         search_query = '+intitle:' + urllib.parse.quote_plus(title)
@@ -142,17 +149,19 @@ def add_book():
 
         for category_name in request.form['book_categories'].split(','):
             category_name = category_name.strip()
-            category = Category.query.filter(Category.name == category_name).first()
+            category = Category.query.\
+                filter(Category.name == category_name).first()
             if not category:
                 category = Category(category_name)
             book.categories.append(category)
 
         thumbnail_url = request.form['thumbnail_url'].strip()
         if thumbnail_url:
-            image_name = ''.join([c for c in book.title.replace(' ', '_')
-                                  if re.match(r'\w', c)]) + book.isbn13 + '.jpg'
+            title = [c for c in book.title.replace(' ', '_') 
+                     if re.match(r'\w', c)]
+            image_name = ''.join(title) + book.isbn13 + '.jpg'
 
-            img = open('bpslibrary/static/img/' + image_name, 'wb')
+            img = open(IMG_DIR + image_name, 'wb')
             img.write(urllib_request.urlopen(thumbnail_url).read())
             book.thumbnail_url = image_name
 
@@ -161,11 +170,10 @@ def add_book():
         dbsession.commit()
         flash("The book has been added to the library successfully!")
     except Exception as e:
-        error = sys.exc_info()[0]
         error_message = "Something has gone wrong!"
         if isinstance(e, exc.IntegrityError):
             error_message += "<br>It seems that the book '%s' "\
-                "exists in the library." % book.title
+                "already exists in the library." % book.title
 
         flash(error_message, 'error')
 
@@ -236,20 +244,26 @@ def update_book():
         book_id = request.form['book_id']
         book_status = int(request.form['book_status'])
 
-        session.query(Book).filter(Book.id == book_id).\
-            update({Book.is_available: book_status}, synchronize_session=False)
+        session.query(Book).filter(Book.id == book_id).update(
+            {Book.is_available: book_status},
+            synchronize_session=False)
         session.commit()
 
         flash("The book has been updated successfully!")
     except Exception as e:
-        flash("Something has gone worng! <br>%s" % str(e), 'error')
+        flash("Something has gone wrong! <br>%s" % str(e), 'error')
 
     return redirect('books/edit')
 
 
 @mod.route('/view', methods=['GET'])
 def view_books():
-    """Display all books in the library."""
+    """Display books in the library.
+
+    Defaults to displaying available books only.
+    If `include_unavailable` parameter is set in the `request`,
+    it display all books; this is used in the admin view all.
+    """
     session = db_session()
     include_unavailable = request.args.get('include-unavailable')
     if include_unavailable:
@@ -262,7 +276,11 @@ def view_books():
 
 @mod.route('/find', methods=['POST'])
 def find_books():
-    """Find books in the library based on the search term."""
+    """Find books in the library based on the search term.
+
+    Search term can be a full or partial book title, author name or
+    category name.
+    """
     search_term = request.form["search_term"]
 
     if search_term and search_term.strip():

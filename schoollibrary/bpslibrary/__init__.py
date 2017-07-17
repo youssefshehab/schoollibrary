@@ -25,9 +25,10 @@ from bpslibrary.models import Model         # noqa
 Model.metadata.create_all(bind=engine)
 
 # now import the views and register them
-from bpslibrary.views import books, index   # noqa
+from bpslibrary.views import books, index, users   # noqa
 app.register_blueprint(books.mod)
 app.register_blueprint(index.mod)
+app.register_blueprint(users.mod)
 
 
 @app.teardown_appcontext
