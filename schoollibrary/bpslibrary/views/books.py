@@ -6,10 +6,8 @@ from urllib import request as urllib_request
 import urllib.parse
 import re
 import requests
-import logging
-import sys
 from flask import Blueprint, flash, redirect, render_template, request
-from sqlalchemy import or_, and_, select, update, exc
+from sqlalchemy import exc, or_, update
 from bpslibrary import db_session
 from bpslibrary.models import Author, Book, Category
 
@@ -26,10 +24,7 @@ def index():
 
 @mod.route('/lookup', methods=['GET', 'POST'])
 def lookup_book():
-    """Look up book details online.
-    
-    GET request are for displaying the 
-    """
+    """Look up book details online."""
     if request.method == 'GET':
         return render_template('add_book.html')
 
@@ -157,7 +152,7 @@ def add_book():
 
         thumbnail_url = request.form['thumbnail_url'].strip()
         if thumbnail_url:
-            title = [c for c in book.title.replace(' ', '_') 
+            title = [c for c in book.title.replace(' ', '_')
                      if re.match(r'\w', c)]
             image_name = ''.join(title) + book.isbn13 + '.jpg'
 

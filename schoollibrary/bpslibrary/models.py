@@ -41,7 +41,7 @@ class Classroom(Model):
 
     def __init__(self, name):
         self.name = name
-    
+
     def __repr__(self):
         return "<Class %r>" % self.name
 
@@ -178,4 +178,3 @@ class Book(Model):
 
     def __repr__(self):
         return "<Book %r>" % self.title
-
