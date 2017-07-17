@@ -30,10 +30,38 @@
                     <div id="navbar" class="collapse navbar-collapse">
                         <ul class="nav navbar-nav">
                             <li><a href="/">Home</a></li>
-                            <li><a href="/books/view">View All Books</a></li>
-                            <li><a href="/books/lookup">Add Books</a></li>
-                            <li><a href="#">Log-in <span class="glyphicon glyphicon-log-in"></span></a>
-                            <li><a href="#">Log-out <span class="glyphicon glyphicon-log-out"></span></a>
+                            <li><a href="/books/view">View book collection</a></li>
+                            <li class="dropdown">
+                                <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Administration <span class="caret"></span></a>
+                                <ul class="dropdown-menu">
+                                    <li><a href="/books/lookup">Add books</a></li>
+                                    <li><a href="/books/edit">Edit book status</a></li>
+                                    <li><a href="/books/view?include-unavailable=true">View all books</a></li>
+                                    <li role="separator" class="divider"></li>
+                                    <li><a href="/users/update">Manage classrooms</a></li>
+                                    <li><a href="/users/access">Manage access</a></li>
+                                    <li role="separator" class="divider"></li>
+                                    <li><a href="/loans/view">View all loans</a></li>
+                                </ul>
+                            </li>
+                        </ul>
+                        <ul class="navbar-right nav navbar-nav">
+                            <li class="dropdown">
+                                <a  href="#" class="" 
+                                    data-toggle="dropdown" 
+                                    role="button" 
+                                    aria-haspopup="true" 
+                                    aria-expanded="false">
+                                    {% if username %}
+                                        Logged in as {{ username }}
+                                    {% else %}
+                                        Login
+                                    {% endif %}</a>
+                                <ul class="dropdown-menu">
+                                    <li ><a href="#">Log-in <span class="glyphicon glyphicon-log-in"></span></a></li>
+                                    <li ><a href="#">Log-out <span class="glyphicon glyphicon-log-out"></span></a></li>
+                                </ul>
+                            </li>
                         </ul>
                     </div>
                 </div>
@@ -46,8 +74,24 @@
                 <div class="page-header">
                     <h1 class="text-primary text-center">{% block header %}{% endblock %}</h1>
                 </div>
-                <!--<div class="message-bar">{% block message_bar %}{% endblock message_bar %}</div>-->
-            
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            {% if category == 'error' %}
+                            <div class="alert alert-box alert-dismissible alert-danger text-center" role="alert">
+                            {% else %}
+                                <div class="alert alert-box alert-dismissible alert-info text-center" role="alert">
+                            {% endif %}
+                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                                <span>    
+                                    {{ message | safe }}
+                                </span>
+                        {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endwith %}
                 <div id="content">{% block content %}{% endblock content %}</div>
             </div>
             <footer class="footer">

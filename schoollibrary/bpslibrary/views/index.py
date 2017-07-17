@@ -1,7 +1,6 @@
 """Handle the main page functions."""
 
-from flask import Blueprint, render_template, url_for
-from sqlalchemy import text
+from flask import Blueprint, render_template
 from bpslibrary import db_session
 from bpslibrary.models import Author, Book, Category
 
@@ -10,7 +9,11 @@ mod = Blueprint('index', __name__)
 
 @mod.route('/')
 def index():
-    """Render the root page."""
+    """Render the home page.
+
+    Initialising the search box with books titels, authors names,
+     and categories names.
+    """
     session = db_session()
     search_terms = []
 
@@ -25,4 +28,4 @@ def index():
 
     search_terms.sort()
 
-    return render_template('home.html', search_terms=search_terms)
+    return render_template('home.html', search_terms=search_terms, username="Youssef")

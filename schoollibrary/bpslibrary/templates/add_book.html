@@ -1,25 +1,5 @@
 {% extends "base.html" %}
-{% block scripts %}
-    {{ super() }}
-    <script type="text/javascript">
-        $(document).ready(
-            function(){
-                $('.collapse')
-                    .on('show.bs.collapse', 
-                        function(){
-                            $(this).parent().find(".glyphicon-expand")
-                                .removeClass("glyphicon-expand")
-                                .addClass("glyphicon-collapse-down");
-                    })
-                    .on('hide.bs.collapse', 
-                        function(){
-                            $(this).parent().find(".glyphicon-collapse-down")
-                                .removeClass("glyphicon-collapse-down")
-                                .addClass("glyphicon-expand");
-                    });
-            });
-    </script>
-{% endblock %}
+
 {% block header %}Add Books{% endblock %}
 {% block content %}
 <div class="container-fluid">
@@ -227,3 +207,25 @@
 </div>
 
 {% endblock content %}
+
+{% block scripts %}
+    {{ super() }}
+    <script type="text/javascript">
+        $(document).ready(
+            function(){
+                $('.collapse')
+                    .on('show.bs.collapse', 
+                        function(){
+                            $(this).parent().find(".glyphicon-expand")
+                                .removeClass("glyphicon-expand")
+                                .addClass("glyphicon-collapse-down");
+                    })
+                    .on('hide.bs.collapse', 
+                        function(){
+                            $(this).parent().find(".glyphicon-collapse-down")
+                                .removeClass("glyphicon-collapse-down")
+                                .addClass("glyphicon-expand");
+                    });
+            });
+    </script>
+{% endblock %}

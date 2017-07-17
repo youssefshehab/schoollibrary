@@ -1,14 +1,19 @@
 {% extends "base.html" %}
+
 {% block header %}
 Broadheath Primary School Library
 {% endblock %}
 {% block content %}
 
     <div class="secondary">
-    <p class="size-21 text-center">
-        Welcome to Broadheath Primary School Library System.
+    <p>
         <br>
-        Here you can search for and find books in the library, read about books and their authors and borrow books.
+        <h4 class="text-center">Welcome to Broadheath Primary School Library System.</h4>
+    </p>
+    <p class="text-center">
+        Here you can search for and find information about books int the library.
+        <br>
+        Simply enter a book title, a name of an auther or a book category in the search box below.
         <br>
     </p>
     </div>
@@ -16,9 +21,14 @@ Broadheath Primary School Library
         <form name="find_books" method="POST" action="{{ url_for('books.find_books') }}" >
             <h3 class="text-info">Search for a book</h3>
             <div class="form-group">
-                <input class="center-block" type="text" id="search_box" name="search_box" value="{{ search_term }}">
+                <input  class="center-block text-center" 
+                        type="text" 
+                        id="search_box" 
+                        name="search_term" 
+                        value="{{ search_term }}"
+                        autofocus="true">
                 <small class="text-muted-green">
-                    Enter book title, author or category
+                    Enter book title, author name or category
                 </small> 
             </div>
             <button class="bps-btn btn btn-primary" type="submit">Find books</button>
@@ -26,6 +36,7 @@ Broadheath Primary School Library
     </div>
 
 {% endblock %}
+
 {% block scripts %}
 {{ super() }}
 <script>
@@ -35,7 +46,9 @@ Broadheath Primary School Library
         var searchTerms = {{ search_terms | safe}};
 
         $( "#search_box" ).autocomplete({
-            source: searchTerms
+            source: searchTerms,
+            minLength: 3,
+            classes: {"ui-autocomplete": "text-center"}
         });
     } );
   </script>

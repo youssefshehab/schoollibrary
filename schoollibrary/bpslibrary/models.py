@@ -1,7 +1,8 @@
 """The library system entities."""
 
 
-from sqlalchemy import Column, String, Integer, Sequence, ForeignKey, Table
+from sqlalchemy import (Column, String, Integer, Sequence,
+                        ForeignKey, Table, Boolean)
 from sqlalchemy.orm import relationship
 from bpslibrary import Model
 
@@ -136,6 +137,7 @@ class Book(Model):
     thumbnail_url = Column(String)
     preview_url = Column(String)
     availability = Column(String)
+    is_available = Column(Boolean)
 
     # relationships
     categories = relationship('Category',
@@ -152,7 +154,7 @@ class Book(Model):
         if len(self.authors) > 1:
             return ", ".join([a.name for a in self.authors])
         elif len(self.authors) == 1:
-            return self.authors[0].name
+            return str(self.authors[0].name)
 
     @property
     def categories_names(self):
@@ -160,7 +162,7 @@ class Book(Model):
         if len(self.categories) > 1:
             return ", ".join([c.name for c in self.categories])
         elif len(self.categories) == 1:
-            return self.categories[0].name
+            return str(self.categories[0].name)
 
     @property
     def short_description(self):
@@ -172,3 +174,4 @@ class Book(Model):
 
     def __repr__(self):
         return "<Book %r>" % self.title
+

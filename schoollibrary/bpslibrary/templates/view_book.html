@@ -1,27 +1,26 @@
 {% extends "base.html" %}
-{% block scripts %}
-    {{ super() }}
-    <script type="text/javascript">
-        $(document).ready(
-            function(){
-                $('.collapse')
-                    .on('show.bs.collapse', 
-                        function(){
-                            $(this).parent().find(".glyphicon-expand")
-                                .removeClass("glyphicon-expand")
-                                .addClass("glyphicon-collapse-down");
-                    })
-                    .on('hide.bs.collapse', 
-                        function(){
-                            $(this).parent().find(".glyphicon-collapse-down")
-                                .removeClass("glyphicon-collapse-down")
-                                .addClass("glyphicon-expand");
-                    });
-            });
-    </script>
-{% endblock %}
+
 {% block header %}View books{% endblock %}
 {% block content %}
+<nav aria-label="Page navigation">
+  <ul class="pagination">
+    <li>
+      <a href="#" aria-label="Previous">
+        <span aria-hidden="true">&laquo;</span>
+      </a>
+    </li>
+    <li><a href="#">1</a></li>
+    <li><a href="#">2</a></li>
+    <li><a href="#">3</a></li>
+    <li><a href="#">4</a></li>
+    <li><a href="#">5</a></li>
+    <li>
+      <a href="#" aria-label="Next">
+        <span aria-hidden="true">&raquo;</span>
+      </a>
+    </li>
+  </ul>
+</nav>
 <div class="panel-group" id="found_books">
     {% for book in books %}
     <div class="panel panel-default">
@@ -76,5 +75,45 @@
     {% endfor %}
 </div>
 
+<nav aria-label="Page navigation">
+  <ul class="pagination">
+    <li>
+      <a href="#" aria-label="Previous">
+        <span aria-hidden="true">&laquo;</span>
+      </a>
+    </li>
+    <li><a href="#">1</a></li>
+    <li><a href="#">2</a></li>
+    <li><a href="#">3</a></li>
+    <li><a href="#">4</a></li>
+    <li><a href="#">5</a></li>
+    <li>
+      <a href="#" aria-label="Next">
+        <span aria-hidden="true">&raquo;</span>
+      </a>
+    </li>
+  </ul>
+</nav>
+{% endblock %}
 
+{% block scripts %}
+    {{ super() }}
+    <script type="text/javascript">
+        $(document).ready(
+            function(){
+                $('.collapse')
+                    .on('show.bs.collapse', 
+                        function(){
+                            $(this).parent().find(".glyphicon-expand")
+                                .removeClass("glyphicon-expand")
+                                .addClass("glyphicon-collapse-down");
+                    })
+                    .on('hide.bs.collapse', 
+                        function(){
+                            $(this).parent().find(".glyphicon-collapse-down")
+                                .removeClass("glyphicon-collapse-down")
+                                .addClass("glyphicon-expand");
+                    });
+            });
+    </script>
 {% endblock %}

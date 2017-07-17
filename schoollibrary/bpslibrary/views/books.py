@@ -8,7 +8,8 @@ import re
 import requests
 import logging
 import sys
-from flask import Blueprint, render_template, request
+from flask import Blueprint, flash, redirect, render_template, request
+from sqlalchemy import or_, and_, select, update, exc
 from bpslibrary import db_session
 from bpslibrary.models import Author, Book, Category
 
@@ -19,7 +20,7 @@ mod = Blueprint('books', __name__, url_prefix='/books')
 @mod.route('/')
 def index():
     """Render the default landing page for books."""
-    return render_template('books.html')
+    return view_books()
 
 
 @mod.route('/lookup', methods=['GET', 'POST'])
@@ -31,6 +32,7 @@ def lookup_book():
         return render_template('add_book.html')
 
     if request.method == 'POST':
+        lookup_results = render_template('add_book.html')
         try:
             isbn = request.form['isbn'].strip()
             book_title = request.form['book_title'].strip()
@@ -41,14 +43,15 @@ def lookup_book():
                 lookup_results = render_template('add_book.html',
                                                  found_books=found_books,
                                                  search_title=book_title,
-                                                 search_isbn=isbn)
+                                                 search_isbn=isbn,
+                                                 username="Youssef")
         except:
             error = sys.exc_info()[0]
-            lookup_results = render_template('add_book.html')
+            flash("Something has gone wrong! <br>" + str(error), 'error')
         return lookup_results
 
 
-def query_google_books(isbn, title):
+def query_google_books(isbn: str, title: str):
     """Look up a book on google books api."""
     search_query = ''
     api_url = 'https://www.googleapis.com/books/v1/volumes?q={}&printType=books'
@@ -59,11 +62,11 @@ def query_google_books(isbn, title):
         search_query = search_query + '+isbn:' + isbn
 
     if not search_query:
-        return []
+        return
 
     search_result = requests.get(api_url.format(search_query))
 
-    # parse results into objects
+    # parse results into Book objects
     if search_result.status_code != requests.codes.ok:  # pylint: disable=E1101
         return []
 
@@ -121,39 +124,50 @@ def query_google_books(isbn, title):
 @mod.route('/add', methods=['POST'])
 def add_book():
     """Add a book to the library."""
-    book = Book()
-    book.title = request.form['book_title'].strip()
-    book.isbn10 = request.form['isbn10'].strip()
-    book.isbn13 = request.form['isbn13'].strip()
-    book.description = request.form['book_description'].strip()
-    book.preview_url = request.form['preview_url'].strip()
+    try:
+        book = Book()
+        book.is_available = 1
+        book.title = request.form['book_title'].strip()
+        book.isbn10 = request.form['isbn10'].strip()
+        book.isbn13 = request.form['isbn13'].strip()
+        book.description = request.form['book_description'].strip()
+        book.preview_url = request.form['preview_url'].strip()
 
-    for author_name in request.form['book_authors'].split(','):
-        author_name = author_name.strip()
-        author = Author.query.filter(Author.name == author_name).first()
-        if not author:
-            author = Author(author_name)
-        book.authors.append(author)
+        for author_name in request.form['book_authors'].split(','):
+            author_name = author_name.strip()
+            author = Author.query.filter(Author.name == author_name).first()
+            if not author:
+                author = Author(author_name)
+            book.authors.append(author)
 
-    for category_name in request.form['book_categories'].split(','):
-        category_name = category_name.strip()
-        category = Category.query.filter(Category.name == category_name).first()
-        if not category:
-            category = Category(category_name)
-        book.categories.append(category)
+        for category_name in request.form['book_categories'].split(','):
+            category_name = category_name.strip()
+            category = Category.query.filter(Category.name == category_name).first()
+            if not category:
+                category = Category(category_name)
+            book.categories.append(category)
 
-    thumbnail_url = request.form['thumbnail_url'].strip()
-    if thumbnail_url:
-        image_name = ''.join([c for c in book.title.replace(' ', '_')
-                              if re.match(r'\w', c)]) + book.isbn13 + '.jpg'
+        thumbnail_url = request.form['thumbnail_url'].strip()
+        if thumbnail_url:
+            image_name = ''.join([c for c in book.title.replace(' ', '_')
+                                  if re.match(r'\w', c)]) + book.isbn13 + '.jpg'
 
-        img = open('bpslibrary/static/img/' + image_name, 'wb')
-        img.write(urllib_request.urlopen(thumbnail_url).read())
-        book.thumbnail_url = image_name
+            img = open('bpslibrary/static/img/' + image_name, 'wb')
+            img.write(urllib_request.urlopen(thumbnail_url).read())
+            book.thumbnail_url = image_name
 
-    dbsession = db_session()
-    dbsession.add(book)
-    dbsession.commit()
+        dbsession = db_session()
+        dbsession.add(book)
+        dbsession.commit()
+        flash("The book has been added to the library successfully!")
+    except Exception as e:
+        error = sys.exc_info()[0]
+        error_message = "Something has gone wrong!"
+        if isinstance(e, exc.IntegrityError):
+            error_message += "<br>It seems that the book '%s' "\
+                "exists in the library." % book.title
+
+        flash(error_message, 'error')
 
     return render_template('add_book.html')
 
@@ -163,17 +177,111 @@ def validate_add_book():
     return None
 
 
+@mod.route('/edit', methods=['GET', 'POST'])
+def edit_book():
+    """Update a book in the library."""
+    session = db_session()
+
+    if request.method == 'GET':
+        lookup_isbns = []
+        lookup_titles = []
+        books = session.query(Book).distinct().\
+            values(Book.isbn10,
+                   Book.isbn13,
+                   Book.title)
+
+        for book in books:
+            lookup_isbns.append(book[0])
+            lookup_isbns.append(book[1])
+            lookup_titles.append(book[2])
+
+        lookup_isbns.sort()
+        lookup_titles.sort()
+        return render_template('edit_book.html',
+                               lookup_isbns=lookup_isbns,
+                               lookup_titles=lookup_titles)
+
+    found_books = []
+
+    if request.method == 'POST':
+        search_isbn = request.form['search_isbn']
+        search_title = request.form['search_title']
+
+        if search_title and search_title.strip():
+            search_term = '%' + search_title.strip() + '%'
+            found_books = session.query(Book).\
+                filter(Book.title.ilike(search_term))
+
+        if search_isbn and search_isbn.strip():
+            search_term = '%' + search_isbn.strip() + '%'
+            found_books = found_books + session.query(Book).\
+                filter(or_(Book.isbn10.ilike(search_term),
+                           Book.isbn13.ilike(search_term)))
+
+    result = render_template('edit_book.html',
+                             search_isbn=search_isbn,
+                             search_title=search_title,
+                             found_books=sorted(found_books,
+                                                key=lambda b: b.title),
+                             username="Youssef")
+    return result
+
+
+@mod.route('/update', methods=['POST'])
+def update_book():
+    """Update a book with provided details."""
+    try:
+        session = db_session()
+
+        book_id = request.form['book_id']
+        book_status = int(request.form['book_status'])
+
+        session.query(Book).filter(Book.id == book_id).\
+            update({Book.is_available: book_status}, synchronize_session=False)
+        session.commit()
+
+        flash("The book has been updated successfully!")
+    except Exception as e:
+        flash("Something has gone worng! <br>%s" % str(e), 'error')
+
+    return redirect('books/edit')
+
+
 @mod.route('/view', methods=['GET'])
 def view_books():
     """Display all books in the library."""
     session = db_session()
-    books = session.query(Book).order_by(Book.title)
-    return render_template('view_book.html', books=books)
+    include_unavailable = request.args.get('include-unavailable')
+    if include_unavailable:
+        books = session.query(Book).order_by(Book.title)
+    else:
+        books = session.query(Book).filter(Book.is_available == 1).\
+            order_by(Book.title)
+    return render_template('view_book.html', books=books, username="Youssef")
 
 
-@mod.route('/find', methods=['GET', 'POST'])
+@mod.route('/find', methods=['POST'])
 def find_books():
     """Find books in the library based on the search term."""
-    session = db_session()
-    books = session.query(Book).order_by(Book.title)
+    search_term = request.form["search_term"]
+
+    if search_term and search_term.strip():
+        search_term = '%' + search_term.strip() + '%'
+        session = db_session()
+
+        books = session.query(Book).\
+            join(Author.books).\
+            filter(or_(Book.title.ilike(search_term),
+                       Author.name.ilike(search_term))).\
+            union(
+                session.query(Book).
+                join(Category.books).
+                filter(or_(Book.title.ilike(search_term),
+                           Category.name.ilike(search_term)))
+            ).\
+            order_by(Book.title)
+
+    if not search_term or not books:
+        return view_books()
+
     return render_template('view_book.html', books=books)

@@ -45,20 +45,21 @@ h1{
 }
 
 .navbar-default .navbar-brand{
-    color: #73B000;
+    color: #018EAA; /* #73B000;*/
 }
 
 .navbar-default .navbar-nav>li>a{
-    color: #73B000;
-}
-
-.navbar-default .navbar-brand:hover {
     color: #018EAA;
+}
+/*
+.navbar-default .navbar-brand:hover {
+    color: #24685D;
 }
 
 .navbar-default .navbar-nav>li>a:hover{
-    color: #018EAA;
+    color: #24685D;
 }
+*/
 
 .top-navi {
     background-color: rgb(215, 248, 150);
@@ -111,3 +112,6 @@ h1{
     transition:all 0.3s ease-in-out;
 }
 
+#search_box {
+    min-width: 40% !important;
+}
