@@ -1,6 +1,0 @@
-{
-    "python.pythonPath": "${workspaceRoot}/bin/python",
-    "python.linting.enabled": true,
-    "python.linting.pep8Enabled": true,
-    "python.linting.pydocstyleEnabled": true
-}
