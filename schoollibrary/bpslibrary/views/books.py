@@ -10,7 +10,10 @@ from flask import Blueprint, flash, redirect, render_template, request
 from sqlalchemy import exc, or_, update
 from bpslibrary import db_session
 from bpslibrary.models import Author, Book, Category
-
+from bpslibrary.utils.fileuploader import upload_to_tmp
+from bpslibrary.utils.barcodereader import scan_image
+from bpslibrary.utils.enums import FileType
+from bpslibrary.utils.apihandler import APIClient
 
 mod = Blueprint('books', __name__, url_prefix='/books')
 IMG_DIR = 'bpslibrary/static/img/'
@@ -29,98 +32,31 @@ def lookup_book():
         return render_template('add_book.html')
 
     if request.method == 'POST':
-        lookup_results = render_template('add_book.html')
+        found_books = []
+        barcode_isbn = []
+        isbn_list = []
+        isbn = request.form['isbn'].strip()
+        book_title = request.form['book_title'].strip()
         try:
-            isbn = request.form['isbn'].strip()
-            book_title = request.form['book_title'].strip()
+            if 'barcode' in request.files and \
+               not request.files['barcode'].filename == '':
+                image_path = upload_to_tmp(request, 'barcode', FileType.IMAGE)
+                barcode_isbn = scan_image(image_path)
 
-            if isbn or book_title:
-                found_books = query_google_books(isbn, book_title)
+            if barcode_isbn or isbn or book_title:
+                isbn_list.append(isbn)
+                isbn_list = set(isbn_list + barcode_isbn)
+                api_client = APIClient(isbn_list, book_title)
+                found_books = api_client.find_books()
 
-                lookup_results = render_template('add_book.html',
-                                                 found_books=found_books,
-                                                 search_title=book_title,
-                                                 search_isbn=isbn,
-                                                 username="Youssef")
-        except Exception as e:
+        except ValueError as e:
             flash("Something has gone wrong! <br>" + str(e), 'error')
-        return lookup_results
 
-
-def query_google_books(isbn: str, title: str):
-    """Look up a book on google books api.
-
-    This method uses the `Volumes: list` method. It is designed for v1
-    of the API.
-    (https://developers.google.com/books/docs/v1/reference/volumes/list)
-    """
-    search_query = ''
-    api_url = \
-        'https://www.googleapis.com/books/v1/volumes?q={}&printType=books'
-
-    if title and title.strip():
-        search_query = '+intitle:' + urllib.parse.quote_plus(title)
-    if isbn and isbn.strip():
-        search_query = search_query + '+isbn:' + isbn
-
-    if not search_query:
-        return
-
-    search_result = requests.get(api_url.format(search_query))
-
-    # parse results into Book objects
-    if search_result.status_code != requests.codes.ok:  # pylint: disable=E1101
-        return []
-
-    total_items = search_result.json()['totalItems']
-    if total_items < 0:
-        return []
-
-    found_books = []
-
-    for item in search_result.json()['items']:
-        book = Book()
-        vol_info = None
-        if 'volumeInfo' in item.keys():
-            vol_info = item['volumeInfo']
-
-            # book title
-            if 'title' in vol_info.keys():
-                book.title = vol_info['title']
-
-            # description
-            if 'description' in vol_info.keys():
-                book.description = vol_info['description']
-
-            # isbn(s)
-            if 'industryIdentifiers' in vol_info.keys():
-                for ident in vol_info['industryIdentifiers']:
-                    if ident['type'] == 'ISBN_13':
-                        book.isbn13 = ident['identifier']
-                    elif ident['type'] == 'ISBN_10':
-                        book.isbn10 = ident['identifier']
-
-            # author(s)
-            if 'authors' in vol_info.keys():
-                for author_name in vol_info['authors']:
-                    book.authors.append(Author(author_name))
-
-            # categories
-            if 'categories' in vol_info.keys():
-                for category_name in vol_info['categories']:
-                    book.categories.append(Category(category_name))
-
-            # thumbnail
-            if 'imageLinks' in vol_info.keys():
-                book.thumbnail_url = vol_info['imageLinks']['thumbnail']
-
-            # preview link
-            if 'previewLink' in vol_info.keys():
-                book.preview_url = vol_info['previewLink']
-
-            found_books.append(book)
-
-    return sorted(found_books, key=lambda b: b.title)
+        return render_template('add_book.html',
+                               found_books=found_books,
+                               search_title=book_title,
+                               search_isbn=isbn,
+                               username="Youssef")
 
 
 @mod.route('/add', methods=['POST'])

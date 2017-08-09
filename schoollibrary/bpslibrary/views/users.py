@@ -80,7 +80,7 @@ def update_db(classroom_file):
 
             session.commit()
             return True
-    except Exception as e:
-        flash("Something has gone wrong!<br>" + str(e), 'error')
+    except Exception as err:
+        flash("Something has gone wrong!<br>" + str(err), 'error')
 
     return False
