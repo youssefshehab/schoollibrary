@@ -21,7 +21,7 @@ def upload_to_tmp(post_request: request, file_name: str, file_type: FileType):
         raise ValueError("No files have been selected.")
 
     if '.' not in file.filename or \
-       file.filename.rsplit('.', 1)[1].lower() not in allowed_extensions:
+       not file.filename.lower().endwith(allowed_extensions):
         raise ValueError("This file type is not permitted.")
 
     if file:

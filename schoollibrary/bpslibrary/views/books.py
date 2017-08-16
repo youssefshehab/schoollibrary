@@ -3,16 +3,12 @@
 # pylint: disable=C0103
 
 from urllib import request as urllib_request
-import urllib.parse
 import re
-import requests
 from flask import Blueprint, flash, redirect, render_template, request
 from sqlalchemy import exc, or_, update
 from bpslibrary import db_session
 from bpslibrary.models import Author, Book, Category
-from bpslibrary.utils.fileuploader import upload_to_tmp
-from bpslibrary.utils.barcodereader import scan_image
-from bpslibrary.utils.enums import FileType
+from bpslibrary.utils.barcode import scan_for_isbn
 from bpslibrary.utils.apihandler import APIClient
 
 mod = Blueprint('books', __name__, url_prefix='/books')
@@ -33,20 +29,20 @@ def lookup_book():
 
     if request.method == 'POST':
         found_books = []
+        isbns = set()
         barcode_isbn = []
-        isbn_list = []
-        isbn = request.form['isbn'].strip()
+        input_isbn = request.form['isbn'].split(',')
         book_title = request.form['book_title'].strip()
+        barcode_file = None
         try:
-            if 'barcode' in request.files and \
-               not request.files['barcode'].filename == '':
-                image_path = upload_to_tmp(request, 'barcode', FileType.IMAGE)
-                barcode_isbn = scan_image(image_path)
+            if 'barcode' in request.files:
+                barcode_file = request.files['barcode']
+                if not barcode_file.filename == '':
+                    barcode_isbn = scan_for_isbn(barcode_file)
 
-            if barcode_isbn or isbn or book_title:
-                isbn_list.append(isbn)
-                isbn_list = set(isbn_list + barcode_isbn)
-                api_client = APIClient(isbn_list, book_title)
+            if barcode_isbn or input_isbn or book_title:
+                isbns = set(input_isbn + barcode_isbn)
+                api_client = APIClient(isbns, book_title)
                 found_books = api_client.find_books()
 
         except ValueError as e:
@@ -55,7 +51,7 @@ def lookup_book():
         return render_template('add_book.html',
                                found_books=found_books,
                                search_title=book_title,
-                               search_isbn=isbn,
+                               search_isbn=', '.join(isbns),
                                username="Youssef")
 
 
