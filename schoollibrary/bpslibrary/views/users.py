@@ -7,10 +7,12 @@ performed by an admin.
 import csv
 import os
 from flask import (Blueprint, flash, redirect,
-                   render_template, request)
+                   render_template, request, url_for)
+from flask_login import login_user, logout_user
 from werkzeug.utils import secure_filename
 from bpslibrary import db_session
-from bpslibrary.models import Classroom, Pupil
+from bpslibrary.models import Classroom, Pupil, User
+from bpslibrary.forms import LoginForm, NewAccessForm
 
 
 UPLOAD_DIR = '/tmp/'
@@ -84,3 +86,32 @@ def update_db(classroom_file):
         flash("Something has gone wrong!<br>" + str(err), 'error')
 
     return False
+
+
+@mod.route('/login', methods=['GET', 'POST'])
+def login():
+    login_form = LoginForm()
+    
+    if request.method == 'POST':
+        if login_form.validate_on_submit():
+            user = User.query.filter_by(username=login_form.username.data).first()
+            login_user(user)
+            flash("Logged in successfully!")
+            return redirect('')
+        else:
+            flash("Please provide login details!")
+
+    return render_template('access.html', login_form=login_form)
+
+    
+@mod.route('/logout', methods=['GET', 'POST'])
+def logout():
+    logout_user()
+    flash("Logged out successfully!")
+    return redirect('')
+
+
+@mod.route('/add', methods=['GET', 'POST'])
+def add_user():
+    new_access_form = NewAccessForm()
+    return render_template('access.html', new_access_form=new_access_form)

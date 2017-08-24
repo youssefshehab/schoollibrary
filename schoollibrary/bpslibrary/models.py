@@ -4,7 +4,9 @@
 from sqlalchemy import (Column, String, Integer, Sequence,
                         ForeignKey, Table, Boolean)
 from sqlalchemy.orm import relationship
-from bpslibrary import Model
+from sqlalchemy.ext.hybrid import hybrid_property
+from flask_login import UserMixin
+from bpslibrary import Model, bcrypt
 
 # Associations
 book_author_association = \
@@ -178,3 +180,33 @@ class Book(Model):
 
     def __repr__(self):
         return "<Book %r>" % self.title
+
+
+class User(Model, UserMixin):
+    """Users of the system.
+
+    This class specifies the access details of users.
+    """
+
+    # orm fields
+    __tablename__ = 'users'
+    __table_args__ = {'extend_existing': True}
+    id = Column(Integer,
+                Sequence('users_seq', start=0, increment=1),
+                primary_key=True)
+    username = Column(String(64), unique=True, nullable=False)
+    _password = Column(String(128), nullable=False)
+
+    @hybrid_property
+    def password(self):
+        return self._password
+
+    @password.setter
+    def _set_password(self, password_text):
+        self._password = bcrypt.generate_password_hash(password_text)
+
+    def is_correct_password(self, password_text):
+        return bcrypt.check_password_hash(self._password, password_text)
+
+    def get_id(self):
+        return str(self.id)
