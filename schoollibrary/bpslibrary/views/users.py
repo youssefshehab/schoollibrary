@@ -1,24 +1,34 @@
 """A view top handle all user related functionalities.
 
-It includes user and access management function which are
-performed by an admin.
+It includes user and access management functions.
 """
 
 import csv
 import os
+from urllib.parse import urlparse, urljoin
 from flask import (Blueprint, flash, redirect,
                    render_template, request, url_for)
-from flask_login import login_user, logout_user
+from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.utils import secure_filename
-from bpslibrary import db_session
+from sqlalchemy import update
+from bpslibrary import login_manager
+from bpslibrary.database import db_session, get_classroom_names
 from bpslibrary.models import Classroom, Pupil, User
 from bpslibrary.forms import LoginForm, NewAccessForm
+from bpslibrary.utils.nav import redirect_to_previous
+from bpslibrary.utils.permission import admin_access_required
 
 
 UPLOAD_DIR = '/tmp/'
 ALLOWED_EXTENSIONS = set(['csv'])
 
 mod = Blueprint('users', __name__, url_prefix='/users')
+
+
+@mod.route('/access', methods=['GET'])
+@admin_access_required
+def access():
+    return render_template('access.html')
 
 
 def allowed_file(filename):
@@ -28,6 +38,7 @@ def allowed_file(filename):
 
 
 @mod.route('/update', methods=['GET', 'POST'])
+@admin_access_required
 def update_classroom():
     """Update classroom list of students."""
     session = db_session()
@@ -59,17 +70,16 @@ def update_classroom():
         except (FileNotFoundError, ValueError) as error:
             flash("<strong>Error! </strong> %s" % str(error), 'error')
             # pass
-
         return redirect('users/update')
 
 
 def update_db(classroom_file):
+    """Persist the the details in the file into the database."""
     try:
         session = db_session()
         with open(classroom_file) as csv_file:
             reader = csv.reader(csv_file, delimiter=',', quotechar='"')
 
-            classrooms = []
             current_classroom = None
 
             for row in reader:
@@ -84,34 +94,94 @@ def update_db(classroom_file):
             return True
     except Exception as err:
         flash("Something has gone wrong!<br>" + str(err), 'error')
-
     return False
 
 
 @mod.route('/login', methods=['GET', 'POST'])
 def login():
+    """Login users into the system."""
+    if current_user.is_authenticated:
+        flash("You are already logged on!")
+        return redirect_to_previous()
+
     login_form = LoginForm()
-    
+
     if request.method == 'POST':
         if login_form.validate_on_submit():
-            user = User.query.filter_by(username=login_form.username.data).first()
-            login_user(user)
-            flash("Logged in successfully!")
-            return redirect('')
-        else:
-            flash("Please provide login details!")
+            user = User.query.filter(User.username.ilike(
+                login_form.username.data.lower())).first()
+
+            if user and user.is_correct_password(login_form.password.data):
+                login_user(user)
+                flash("Logged in successfully!")
+                return redirect_to_previous()
+
+        flash("Invalid login details.", 'error')
 
     return render_template('access.html', login_form=login_form)
 
-    
+
 @mod.route('/logout', methods=['GET', 'POST'])
 def logout():
-    logout_user()
-    flash("Logged out successfully!")
-    return redirect('')
+    """Logout users from the system."""
+    if current_user.is_authenticated:
+        logout_user()
+        flash("Logged out successfully!")
+    else:
+        flash("You are not logged in!")
+
+    return redirect_to_previous()
 
 
 @mod.route('/add', methods=['GET', 'POST'])
+@admin_access_required
 def add_user():
+    """Give access to a classroom or pupil."""
+    session = db_session()
     new_access_form = NewAccessForm()
+    new_access_form.classroom.choices = [(0, 'None')] + \
+        [(cr[0], '{} ({})'.format(cr[1], cr[2]))
+         for cr in session.query(Classroom.id,
+                                 Classroom.name,
+                                 Classroom.year).distinct()]
+
+    if request.method == 'POST':
+        if new_access_form.validate_on_submit():
+            # check if it's an existing user
+            user = User.query.filter(
+                User.username.ilike(new_access_form.username.data)).first()
+            # check if a classroom id has been passed
+            classroom = Classroom.query.filter(
+                Classroom.id == new_access_form.classroom.data).first()
+
+            # for individual user; should be unique
+            if user and not classroom:
+                flash("This username is already in use, " +
+                      "please chose a different username.", 'error')
+
+            # for classroom username/password change, update db
+            if user and classroom:
+                user.username = new_access_form.username.data
+                user.password = new_access_form.password.data
+                user.is_admin = new_access_form.is_admin.data
+                session.commit()
+                flash("Login details have been updated!")
+
+            # for new users, create
+            elif not user:
+                user = User()
+                user.username = new_access_form.username.data
+                user.password = new_access_form.password.data
+                user.is_admin = new_access_form.is_admin.data
+
+                # link to classroom if provided
+                if classroom:
+                    classroom.user = user
+
+                session.add(user)
+                session.commit()
+                flash("Access has been created successfully!")
+        else:
+            flash("Invalid entries!", 'error')
+
     return render_template('access.html', new_access_form=new_access_form)

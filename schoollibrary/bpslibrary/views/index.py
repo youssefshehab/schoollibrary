@@ -1,7 +1,7 @@
 """Handle the main page functions."""
 
 from flask import Blueprint, render_template
-from bpslibrary import db_session
+from bpslibrary.database import db_session
 from bpslibrary.models import Author, Book, Category
 
 mod = Blueprint('index', __name__)
@@ -11,8 +11,8 @@ mod = Blueprint('index', __name__)
 def index():
     """Render the home page.
 
-    Initialising the search box with books titels, authors names,
-     and categories names.
+    Initialising the search box with books titles, authors names,
+    and categories names.
     """
     session = db_session()
     search_terms = []
@@ -28,4 +28,4 @@ def index():
 
     search_terms.sort()
 
-    return render_template('home.html', search_terms=search_terms, username="Youssef")
+    return render_template('home.html', search_terms=search_terms)

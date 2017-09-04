@@ -5,7 +5,14 @@ from PIL import Image, ImageEnhance
 
 
 def scan_for_isbn(image_file):
-    """A method to extract the ISBN from the image"""
+    """A method to extract the ISBN from an image of the barcode.
+
+    :param image_file:
+        A filename (string), pathlib.Path object or a file object.
+        The file object must implement :py:meth:`~file.read`,
+        :py:meth:`~file.seek`, and :py:meth:`~file.tell` methods,
+        and be opened in binary mode.
+    """
     isbns = []
 
     max_length = 850

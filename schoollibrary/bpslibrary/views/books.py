@@ -5,11 +5,16 @@
 from urllib import request as urllib_request
 import re
 from flask import Blueprint, flash, redirect, render_template, request
+from flask_login import login_required, current_user
 from sqlalchemy import exc, or_, update
-from bpslibrary import db_session
-from bpslibrary.models import Author, Book, Category
+from bpslibrary import login_manager
+from bpslibrary.database import db_session
+from bpslibrary.forms import NewLoanForm, LoanReturnForm
+from bpslibrary.models import Author, Book, Category, Classroom, Pupil
 from bpslibrary.utils.barcode import scan_for_isbn
 from bpslibrary.utils.apihandler import APIClient
+from bpslibrary.utils.permission import admin_access_required
+
 
 mod = Blueprint('books', __name__, url_prefix='/books')
 IMG_DIR = 'bpslibrary/static/img/'
@@ -22,6 +27,7 @@ def index():
 
 
 @mod.route('/lookup', methods=['GET', 'POST'])
+@admin_access_required
 def lookup_book():
     """Look up book details online."""
     if request.method == 'GET':
@@ -51,11 +57,11 @@ def lookup_book():
         return render_template('add_book.html',
                                found_books=found_books,
                                search_title=book_title,
-                               search_isbn=', '.join(isbns),
-                               username="Youssef")
+                               search_isbn=', '.join(isbns))
 
 
 @mod.route('/add', methods=['POST'])
+@admin_access_required
 def add_book():
     """Add a book to the library."""
     try:
@@ -92,9 +98,10 @@ def add_book():
             img.write(urllib_request.urlopen(thumbnail_url).read())
             book.thumbnail_url = image_name
 
-        dbsession = db_session()
-        dbsession.add(book)
-        dbsession.commit()
+        session = db_session()
+        session.add(book)
+        session.commit()
+
         flash("The book has been added to the library successfully!")
     except Exception as e:
         error_message = "Something has gone wrong!"
@@ -113,6 +120,7 @@ def validate_add_book():
 
 
 @mod.route('/edit', methods=['GET', 'POST'])
+@admin_access_required
 def edit_book():
     """Update a book in the library."""
     session = db_session()
@@ -157,12 +165,12 @@ def edit_book():
                              search_isbn=search_isbn,
                              search_title=search_title,
                              found_books=sorted(found_books,
-                                                key=lambda b: b.title),
-                             username="Youssef")
+                                                key=lambda b: b.title))
     return result
 
 
 @mod.route('/update', methods=['POST'])
+@admin_access_required
 def update_book():
     """Update a book with provided details."""
     try:
@@ -192,13 +200,28 @@ def view_books():
     it display all books; this is used in the admin view all.
     """
     session = db_session()
+
+    new_loan_form = None
+    loan_return_form = None
+
+    if current_user.is_authenticated and current_user.classroom:
+        new_loan_form = NewLoanForm()
+        class_id = current_user.classroom.id
+        new_loan_form.pupil_id.choices = \
+            [(p[0], p[1]) for p in session.query(Pupil.id, Pupil.name).
+             filter(Pupil.classroom_id == class_id)]
+        loan_return_form = LoanReturnForm()
+
     include_unavailable = request.args.get('include-unavailable')
     if include_unavailable:
         books = session.query(Book).order_by(Book.title)
     else:
         books = session.query(Book).filter(Book.is_available == 1).\
             order_by(Book.title)
-    return render_template('view_book.html', books=books, username="Youssef")
+    return render_template('view_book.html',
+                           books=books,
+                           new_loan_form=new_loan_form,
+                           loan_return_form=loan_return_form)
 
 
 @mod.route('/find', methods=['POST'])

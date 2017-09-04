@@ -51,23 +51,111 @@
         <div id="found-book-{{ loop.index }}" class="panel-collapse collapse out">
             <div class="panel-body">
                 <div class="container-fluid">
-                <p>
-                    <dt>Description</dt>
-                    <dd>{{ book.description | safe }}</dd>
-                </p>
-                <p>
-                    <dt>Authors</dt>
-                    <dd>{{ book.authors_names }}</dd>
-                </p>
-                <p>
-                    <dt>Categories</dt>
-                    <dd>{{ book.categories_names }}</dd>
-                </p>
-                <p>
-                    <dt> <span class="glyphicon glyphicon-barcode"></span> ISBN</dt>
-                    <dd>{{ book.isbn13 }}</dd>
-                    <dd>{{ book.isbn10 }}</dd>
-                </p>
+                    <p>
+                        <dt>Description</dt>
+                        <dd>{{ book.description | safe }}</dd>
+                    </p>
+                    <p>
+                        <dt>Authors</dt>
+                        <dd>{{ book.authors_names }}</dd>
+                    </p>
+                    <p>
+                        <dt>Categories</dt>
+                        <dd>{{ book.categories_names }}</dd>
+                    </p>
+                    <p>
+                        <dt> <span class="glyphicon glyphicon-barcode"></span> ISBN</dt>
+                        <dd>{{ book.isbn13 }}</dd>
+                        <dd>{{ book.isbn10 }}</dd>
+                    </p>
+                    <p>
+                        <dt>Current Location</dt>
+                        <dd>{{ book.current_location|title() }}</dd>
+                    </p>
+                    <p>
+                        {% if book.is_available and book.current_location|lower() == 'library' %}
+                            {% if new_loan_form %}    
+                                <div class="bg-info">
+                                    <button data-target="#loan-{{ book.id }}" class="btn btn-md btn-block btn-info" data-toggle="collapse">
+                                        <span class="glyphicon glyphicon-expand pull-left"></span> <span class="col-xs-1">Borrow</span>
+                                    </button>                          
+                                    <div id="loan-{{ book.id }}" class="container-fluid collapse">
+                                        <form method="POST" 
+                                              action="{{ url_for('loans.record_loan') }}" 
+                                              enctype="multipart/form-data">
+                                            {{ new_loan_form.csrf_token }}
+                                            {{ new_loan_form.book_id(hidden="hidden", value=book.id) }}
+                                            {{ new_loan_form.user_id(hidden="hidden", value=current_user.id) }}
+                                            <div class="form-group">
+                                                {{ new_loan_form.pupil_id.label }}
+                                                {{ new_loan_form.pupil_id(class_="form-control") }}
+                                                <small class="help-block text-muted-green">
+                                                    {{ new_loan_form.pupil_id.description }}
+                                                </small>
+                                            </div>
+                                            <div class="form-group">
+                                                {% set loan_barcode_img_id = "loan-barcode-%d"|format(book.id) %}
+                                                <dt>
+                                                    <label><span class="glyphicon glyphicon-barcode"></span> Barcode</label>
+                                                </dt>
+                                                <dt>
+                                                    {{ new_loan_form.barcode_img.label(class_="btn btn-sm btn-default", for=loan_barcode_img_id)}}
+                                                    <span id="update-{{ loan_barcode_img_id }}"></span>
+                                                </dt>
+                                                <small class="text-muted-green">
+                                                        {{ new_loan_form.barcode_img.description }}
+                                                </small> 
+                                                <dd hidden="hidden">
+                                                    {{ new_loan_form.barcode_img(id=loan_barcode_img_id, accept="image/*", capture="camera", onchange="updateElement('" + loan_barcode_img_id + "', 'update-" + loan_barcode_img_id + "')")}}
+                                                </dd>
+                                            </div>
+                                            <button class="bps-btn btn btn-primary" type="submit">Borrow book</button>
+                                            <br>
+                                        </form>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        {% endif %}
+                        {% if book.is_available and book.current_location|lower() == 'loan' %}
+                            {% if loan_return_form %}
+                                {% if book.current_loan and book.current_loan in current_user.classroom.open_loans %}
+                                <div class="bg-danger">
+                                    <button data-target="#return-{{ book.id }}" class="btn btn-md btn-block btn-danger" data-toggle="collapse">
+                                        <span class="glyphicon glyphicon-expand pull-left"></span> <span class="col-xs-1">Return</span>
+                                    </button>
+                                    <dev id="return-{{ book.id }}" class="collapse container-fluid">
+                                        <form method="POST" 
+                                            action="{{ url_for('loans.record_return') }}" 
+                                            enctype="multipart/form-data">
+                                            {{ loan_return_form.csrf_token }}    
+                                            <div class="form-group">
+                                                {% set return_barcode_img_id = "return-barcode-%d"|format(book.id) %}
+                                                <dt>
+                                                    <label><span class="glyphicon glyphicon-barcode"></span> Barcode</label>
+                                                </dt>
+                                                <dt>
+                                                    {{ new_loan_form.barcode_img.label(class_="btn btn-sm btn-default", for=return_barcode_img_id)}}
+                                                    <span id="update-{{ return_barcode_img_id }}"></span>
+                                                </dt>
+                                                <small class="text-muted-green">
+                                                        {{ new_loan_form.barcode_img.description }}
+                                                </small>
+                                                <dd hidden="hidden">
+                                                    {{ loan_return_form.book_id(value=book.id) }}
+                                                    {{ new_loan_form.barcode_img(id=return_barcode_img_id, accept="image/*", 
+                                                                                 capture="camera", 
+                                                                                 onchange="updateElement('" + return_barcode_img_id + "', 'update-" + return_barcode_img_id + "')")}}
+                                                </dd>
+                                            </div>
+                                            <button class="bps-btn btn btn-primary" type="submit">Borrow book</button>
+                                            <br>
+                                        </form>
+                                    </dev>
+                                </div>
+                                {% endif %}
+                            {% endif %}
+                        {% endif %}
+                    </p>
                 </div>
             </div>
         </div>
@@ -99,21 +187,7 @@
 {% block scripts %}
     {{ super() }}
     <script type="text/javascript">
-        $(document).ready(
-            function(){
-                $('.collapse')
-                    .on('show.bs.collapse', 
-                        function(){
-                            $(this).parent().find(".glyphicon-expand")
-                                .removeClass("glyphicon-expand")
-                                .addClass("glyphicon-collapse-down");
-                    })
-                    .on('hide.bs.collapse', 
-                        function(){
-                            $(this).parent().find(".glyphicon-collapse-down")
-                                .removeClass("glyphicon-collapse-down")
-                                .addClass("glyphicon-expand");
-                    });
-            });
+        $(document).ready(attachCollapseExpandEvents);
+            
     </script>
 {% endblock %}

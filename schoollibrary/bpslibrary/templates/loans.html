@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block header %}
+
+{% if new_loan_form %}
+Borrow
+{% elif new_access_form %}
+Setup Access
+{% else %}
+User Access Management
+{% endif %}
+
+{% endblock %}
+{% block content %}
+    
+{% endblock %}

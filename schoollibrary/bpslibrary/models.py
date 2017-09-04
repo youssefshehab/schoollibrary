@@ -2,11 +2,13 @@
 
 
 from sqlalchemy import (Column, String, Integer, Sequence,
-                        ForeignKey, Table, Boolean)
+                        ForeignKey, Table, Boolean, Date)
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.hybrid import hybrid_property
 from flask_login import UserMixin
-from bpslibrary import Model, bcrypt
+from bpslibrary import bcrypt
+from bpslibrary.database import Model
+from bpslibrary.utils.enums import BookLocation
 
 # Associations
 book_author_association = \
@@ -40,6 +42,16 @@ class Classroom(Model):
 
     # relationships
     pupils = relationship('Pupil', back_populates='classroom')
+    user_id = Column(Integer, ForeignKey('users.id'))
+    user = relationship('User', back_populates='classroom')
+
+    @property
+    def open_loans(self):
+        """Open loans for pupils of this classroom."""
+        loans = []
+        for pupil in self.pupils:
+            loans += [loan for loan in pupil.loans if not loan.end_date]
+        return loans
 
     def __init__(self, name):
         self.name = name
@@ -63,7 +75,10 @@ class Pupil(Model):
 
     # relationships
     classroom_id = Column(Integer, ForeignKey('classrooms.id'))
-    classroom = relationship('Classroom', back_populates='pupils')
+    classroom = relationship(
+        'Classroom', back_populates='pupils', uselist=False)
+
+    loans = relationship('Loan', back_populates='pupil')
 
     def __init__(self, name):
         self.name = name
@@ -144,6 +159,7 @@ class Book(Model):
     preview_url = Column(String)
     availability = Column(String)
     is_available = Column(Boolean)
+    current_location = Column(String)
 
     # relationships
     categories = relationship('Category',
@@ -153,6 +169,7 @@ class Book(Model):
     authors = relationship('Author',
                            secondary=book_author_association,
                            back_populates='books')
+    loans = relationship('Loan', back_populates='book')
 
     @property
     def authors_names(self):
@@ -164,7 +181,7 @@ class Book(Model):
 
     @property
     def categories_names(self):
-        """Names of the categories seperated by comma."""
+        """Names of the categories separated by comma."""
         if len(self.categories) > 1:
             return ", ".join([c.name for c in self.categories])
         elif len(self.categories) == 1:
@@ -177,6 +194,15 @@ class Book(Model):
             return self.description[:150] + "..."
         else:
             return "..."
+
+    @property
+    def current_loan(self):
+        """Current open loan."""
+        current_loan = [loan for loan in
+                        sorted(self.loans, key=lambda l: l.id, reverse=True)
+                        if not loan.end_date]
+
+        return current_loan[0] if current_loan else None
 
     def __repr__(self):
         return "<Book %r>" % self.title
@@ -196,6 +222,10 @@ class User(Model, UserMixin):
                 primary_key=True)
     username = Column(String(64), unique=True, nullable=False)
     _password = Column(String(128), nullable=False)
+    is_admin = Column(Boolean)
+
+    # relationships
+    classroom = relationship('Classroom', back_populates='user', uselist=False)
 
     @hybrid_property
     def password(self):
@@ -210,3 +240,26 @@ class User(Model, UserMixin):
 
     def get_id(self):
         return str(self.id)
+
+
+class Loan(Model):
+    """Book loan to a pupil."""
+
+    # orm fields
+    __tablename__ = 'loans'
+    # __table_args__ = {'extend_existing': True}
+    id = Column(Integer,
+                Sequence('loans_seq', start=0, increment=1),
+                primary_key=True)
+
+    pupil_id = Column(Integer, ForeignKey('pupils.id'))
+    pupil = relationship('Pupil', back_populates='loans', uselist=False)
+    book_id = Column(Integer, ForeignKey('books.id'))
+    book = relationship('Book', back_populates='loans', uselist=False)
+
+    start_date = Column(Date, nullable=False)
+    end_date = Column(Date, nullable=True)
+
+    def __repr__(self):
+        return "<Loan %d (book %d) %s-%s" %\
+            (self.id, self.book_id, self.start_date, self.end_date)
