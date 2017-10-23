@@ -146,11 +146,11 @@ class Book(Model):
     # orm required fields
     __tablename__ = 'books'
     __table_args__ = {'extend_existing': True}
+
+    # columns
     id = Column(Integer,
                 Sequence('books_seq', start=0, increment=1),
                 primary_key=True)
-
-    # columns
     isbn10 = Column(String, unique=True, nullable=True)
     isbn13 = Column(String, unique=True, nullable=True)
     title = Column(String)
@@ -217,6 +217,8 @@ class User(Model, UserMixin):
     # orm fields
     __tablename__ = 'users'
     __table_args__ = {'extend_existing': True}
+
+    # columns
     id = Column(Integer,
                 Sequence('users_seq', start=0, increment=1),
                 primary_key=True)
@@ -233,12 +235,23 @@ class User(Model, UserMixin):
 
     @password.setter
     def _set_password(self, password_text):
+        """
+        Sets the password property after hashing it.
+        
+        :param1: password_text (str)
+        The password to be hashed.
+        """
         self._password = bcrypt.generate_password_hash(password_text)
 
     def is_correct_password(self, password_text):
+        """
+        Check the hash of password_text against the saved hash.
+        
+        """
         return bcrypt.check_password_hash(self._password, password_text)
 
     def get_id(self):
+        """Retrieves the user by id."""
         return str(self.id)
 
 
@@ -247,7 +260,7 @@ class Loan(Model):
 
     # orm fields
     __tablename__ = 'loans'
-    # __table_args__ = {'extend_existing': True}
+    __table_args__ = {'extend_existing': True}
     id = Column(Integer,
                 Sequence('loans_seq', start=0, increment=1),
                 primary_key=True)

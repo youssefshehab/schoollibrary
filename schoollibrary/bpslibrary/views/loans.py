@@ -73,7 +73,7 @@ def record_loan():
 
         session.add(loan)
         session.commit()
-        flash("Loan has been recorded for %s to %s" %
+        flash("Loan has been recorded for '%s' to %s" %
               (book.title, pupil.name))
 
     except ValueError as val_err:
@@ -113,7 +113,7 @@ def record_return():
         loan = book.current_loan
 
         if not loan:
-            raise ValueError("No loans found for this book. %s" % query)
+            raise ValueError("No loans found for this book.")
 
         loan.end_date = datetime.date(datetime.now())
         book.current_location = BookLocation.LIBRARY.value

@@ -2,11 +2,13 @@
 <html lang="eng">
     <head>
     {% block head %}
+        <link rel="icon" href="{{ url_for('static', filename='img/bps.ico') }}" type="image">
         <title>{% block title %}BPS Library{% endblock title %}</title>
         {% block metas %}
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         {% endblock metas %}
+
         {% block styles %}
         <link rel="stylesheet" href="{{url_for('static', filename='css/bootstrap.min.css')}}" />
         <link rel="stylesheet" href="{{url_for('static', filename='css/bps-base.css')}}" />
@@ -78,7 +80,9 @@
             
             <div class="container-fluid">
                 <div class="container-fluid">
-                    <img class="logo img-responsive" src="{{ url_for('static', filename='img/bps_logo_trans_shad.png') }}" />
+                    <img class="logo img-responsive" 
+                         src="{{ url_for('static', filename='img/bps_logo_trans_shad.png') }}" 
+                         alt="BPS Logo"/>
                 </div>
                 <div class="page-header">
                     <h1 class="text-primary text-center">{% block header %}{% endblock %}</h1>

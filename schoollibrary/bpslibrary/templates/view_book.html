@@ -1,5 +1,7 @@
 {% extends "base.html" %}
 
+{% block title %} {{ super() }} - View books {% endblock %}
+
 {% block header %}View books{% endblock %}
 {% block content %}
 <nav aria-label="Page navigation">
@@ -147,7 +149,7 @@
                                                                                  onchange="updateElement('" + return_barcode_img_id + "', 'update-" + return_barcode_img_id + "')")}}
                                                 </dd>
                                             </div>
-                                            <button class="bps-btn btn btn-primary" type="submit">Borrow book</button>
+                                            <button class="bps-btn btn btn-primary" type="submit">Return book</button>
                                             <br>
                                         </form>
                                     </dev>

@@ -1,15 +1,19 @@
+
+<!-- Access -->
+
 {% extends "base.html" %}
+{% block title %}
+    {{ super() }} - Access
+{% endblock %}
 
 {% block header %}
-
-{% if login_form %}
-Login
-{% elif new_access_form %}
-Setup Access
-{% else %}
-User Access Management
-{% endif %}
-
+    {% if login_form %}
+        Login
+    {% elif new_access_form %}
+        Setup Access
+    {% else %}
+        User Access Management
+    {% endif %}
 {% endblock %}
 {% block content %}
 
@@ -17,14 +21,14 @@ User Access Management
     <form method="POST" >
         {{ login_form.csrf_token }}
         <div class="form-group col-md-4">
-            {{ login_form.username.label }} *
+            {{ login_form.username.label }}
             {{ login_form.username(class_="form-control") }}
             <small class="help-block text-muted-green">
                 {{ login_form.username.description }}
             </small>
         </div>
         <div class="form-group col-md-4">
-            {{ login_form.password.label }} *
+            {{ login_form.password.label }}
             {{ login_form.password(class_="form-control") }}
         </div>
         <div class="col-md-12"> 

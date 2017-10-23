@@ -1,8 +1,9 @@
+""""""
+
 from functools import wraps
-from flask import flash, redirect, request
+from flask import flash
 from flask_login import current_user
 from bpslibrary import login_manager
-from bpslibrary.models import User
 from bpslibrary.utils.nav import redirect_to_previous
 
 
@@ -24,7 +25,7 @@ def admin_access_required(func):
     """
     @wraps(func)
     def decorated_view(*args, **kwargs):
-        
+        """"""
         if not current_user.is_authenticated:
             return login_manager.unauthorized()
         elif not current_user.is_admin:

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-
+{% block title %} {{ super() }} - Home {% endblock %}
 {% block header %}
 Broadheath Primary School Library
 {% endblock %}
@@ -11,9 +11,9 @@ Broadheath Primary School Library
         <h4 class="text-center">Welcome to Broadheath Primary School Library System.</h4>
     </p>
     <p class="text-center">
-        Here you can search for and find information about books int the library.
+        Here you can search for and find information about books in the library.
         <br>
-        Simply enter a book title, a name of an auther or a book category in the search box below.
+        Simply enter a book title, a name of an author or a book category in the search box below.
         <br>
     </p>
     </div>
@@ -28,8 +28,7 @@ Broadheath Primary School Library
                         type="text" 
                         id="search_box" 
                         name="search_term"
-                        value="{{ search_term }}"
-                        autofocus="true">
+                        value="{{ search_term }}">
 
             </div>
             <button class="bps-btn btn btn-primary" type="submit">Find books</button>

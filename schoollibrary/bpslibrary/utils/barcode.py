@@ -1,3 +1,8 @@
+"""
+Barcode
+=======
+"""
+
 import zbar
 import zbar.misc
 import numpy as np

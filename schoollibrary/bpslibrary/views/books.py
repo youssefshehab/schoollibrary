@@ -201,16 +201,7 @@ def view_books():
     """
     session = db_session()
 
-    new_loan_form = None
-    loan_return_form = None
-
-    if current_user.is_authenticated and current_user.classroom:
-        new_loan_form = NewLoanForm()
-        class_id = current_user.classroom.id
-        new_loan_form.pupil_id.choices = \
-            [(p[0], p[1]) for p in session.query(Pupil.id, Pupil.name).
-             filter(Pupil.classroom_id == class_id)]
-        loan_return_form = LoanReturnForm()
+    new_loan_form, loan_return_form = init_loan_forms()
 
     include_unavailable = request.args.get('include-unavailable')
     if include_unavailable:
@@ -252,4 +243,27 @@ def find_books():
     if not search_term or not books:
         return view_books()
 
-    return render_template('view_book.html', books=books)
+    new_loan_form, loan_return_form = init_loan_forms()
+
+    return render_template('view_book.html',
+                           books=books,
+                           new_loan_form=new_loan_form,
+                           loan_return_form=loan_return_form)
+
+
+def init_loan_forms():
+    """Initialises a new_loan and loan_return forms."""
+    session = db_session()
+
+    new_loan_form = None
+    loan_return_form = None
+
+    if current_user.is_authenticated and current_user.classroom:
+        new_loan_form = NewLoanForm()
+        class_id = current_user.classroom.id
+        new_loan_form.pupil_id.choices = \
+            [(p[0], p[1]) for p in session.query(Pupil.id, Pupil.name).
+             filter(Pupil.classroom_id == class_id)]
+        loan_return_form = LoanReturnForm()
+
+    return new_loan_form, loan_return_form

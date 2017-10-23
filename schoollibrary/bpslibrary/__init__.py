@@ -1,4 +1,27 @@
-"""BPS library system"""
+"""
+    BPS library system
+    ==================
+
+    A primary school library system aimed at aiding the administration
+    of the library and enhancing its effectiveness.
+    
+    :copyright:
+    
+    Copyright (C) 2017 Youssef Shehab
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program. If not, see <http://www.gnu.org/licenses/>.
+"""
 
 from flask import Flask
 from flask_bcrypt import Bcrypt
@@ -35,8 +58,10 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'users.login'
 
+# initialise database
 init_database()
 
+# register the views
 register_views()
 
 

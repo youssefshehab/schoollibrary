@@ -5,7 +5,6 @@ It includes user and access management functions.
 
 import csv
 import os
-from urllib.parse import urlparse, urljoin
 from flask import (Blueprint, flash, redirect,
                    render_template, request, url_for)
 from flask_login import login_user, logout_user, current_user, login_required
@@ -28,6 +27,9 @@ mod = Blueprint('users', __name__, url_prefix='/users')
 @mod.route('/access', methods=['GET'])
 @admin_access_required
 def access():
+    """
+    Renders the homepage of user access.
+    """
     return render_template('access.html')
 
 
@@ -130,13 +132,13 @@ def logout():
     else:
         flash("You are not logged in!")
 
-    return redirect_to_previous()
+    return redirect('')
 
 
 @mod.route('/add', methods=['GET', 'POST'])
 @admin_access_required
 def add_user():
-    """Give access to a classroom or pupil."""
+    """Give access to a classroom, pupil or admin."""
     session = db_session()
     new_access_form = NewAccessForm()
     new_access_form.classroom.choices = [(0, 'None')] + \
