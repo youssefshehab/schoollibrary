@@ -1,0 +1,261 @@
+"""Handle online APIs for relates ISBN and book info."""
+
+import re
+import urllib.parse
+import xml.etree.ElementTree as ET
+import requests
+import pyisbn
+from flask import flash
+from bpslibrary.models import Author, Book, Category
+
+class APIClient():
+    """
+    Online book information APIs handler.
+
+    The primary function is to lookup book details on
+    google books and it utilises other book info webservices
+    to support that function.
+
+    Parameters
+    :param1 isbn_list (list):
+    A list ISBNs to lookup.
+
+    :param2 book_title (str):
+    A title of a book to lookup.
+
+    """
+
+    def __init__(self, isbn_list, book_title):
+        """Initialise an APIClient.
+
+        :param1 isbn_list:
+        A list ISBNs to lookup.
+
+        :param2 book_title:
+        A title of a book to lookup.
+        """
+        self.isbns = isbn_list if isbn_list else []
+        self.book_title = book_title.strip() if book_title else ''
+
+    def find_books(self):
+        """
+        Lookup book details on google books.
+
+        Utilising book info webservices to support, it looks up isbn and title.
+
+        :ISBN lookup:
+        First lookup the ISBN on google books, if that yielded no
+        results, the related ISBNs are looked up on xISBN and librarything
+        and the result is looked up on google books. If no related
+        ISBNs found on xISBN or LibraryThing, the title is looked up
+        on isbndb and isbnplus, and lookup the book on google books using
+        the yielded title. If none of these steps.
+
+        :Title lookup:
+        If provided, books will be also looked up on google books by title.
+
+        """
+        found_books = []
+        found_on_google = []
+
+        found_books += self.search_google_books(None, self.book_title)
+        for book in found_books:
+            gb_title = re.sub(r'[^\w\s]', '', book.title.lower())
+            s_title = re.sub(r'[^\w\s]', '', self.book_title.lower())
+            if s_title not in gb_title and gb_title not in s_title:
+                found_books.remove(book)
+
+        if bool(self.isbns):
+            for isbn in self.isbns:
+                isbn = isbn.strip()
+                found_on_google = []
+
+                # first search on google books
+                found_on_google += self.search_google_books(isbn, None)
+
+                # if not on google books, search related isbns
+                if not found_on_google:
+                    found_on_google += self.lookup_by_related_isbn(isbn)
+
+                # if related isbns are not on google-books, search by title
+                found_title = ''
+                if not found_on_google:
+                    found_title = self.lookup_title(isbn)
+
+                if found_title:
+                    found_on_google += self.search_google_books(None,
+                                                                found_title)
+
+                for i, book in enumerate(found_on_google):
+                    gb_title = re.sub(r'[^\w\s]', '', book.title.lower())
+                    s_title = re.sub(r'[^\w\s]', '', found_title.lower())
+                    if gb_title not in s_title and s_title not in gb_title:
+                        found_on_google.remove(book)
+                        continue
+                    if len(isbn) == 13:
+                        found_on_google[i].isbn13 = isbn
+                        found_on_google[i].isbn10 = pyisbn.convert(isbn)
+                    else:
+                        found_on_google[i].isbn10 = isbn
+                        found_on_google[i].isbn13 = pyisbn.convert(isbn)
+
+                found_books += found_on_google
+
+        found_books = sorted(set(found_books), key=lambda b: b.title)
+
+        return found_books
+
+    def search_google_books(self, isbn, title):
+        """Look up a book on google books api.
+
+        This method uses the `Volumes: list` method. It is designed for v1
+        of the API.
+        (https://developers.google.com/books/docs/v1/reference/volumes/list)
+        """
+        search_query = ''
+        api_url = \
+            'https://www.googleapis.com/books/v1/volumes?q={}&printType=books'
+
+        if title and title.strip():
+            search_query = '+intitle:' + urllib.parse.quote_plus(title)
+
+        if isbn and isbn.strip():
+            search_query = search_query + '+isbn:' + isbn
+
+        if not search_query:
+            return []
+
+        search_result = requests.get(api_url.format(search_query))
+
+        # pylint: disable=E1101
+        if search_result.status_code != requests.codes.ok:
+            return []
+
+        if int(search_result.json().get('totalItems')) <= 0:
+            return []
+
+        if 'items' not in search_result.json().keys():
+            return []
+
+        found_books = []
+        for item in search_result.json().get('items'):
+
+            if 'volumeInfo' not in item.keys():
+                continue
+
+            book = Book()
+            vol_info = item.get('volumeInfo')
+
+            # book title
+            book.title = vol_info.get('title')
+
+            # description
+            book.description = vol_info.get('description')
+
+            # isbn(s)
+            if 'industryIdentifiers' in vol_info.keys():
+                for ident in vol_info.get('industryIdentifiers'):
+                    if ident.get('type').upper() == 'ISBN_13':
+                        book.isbn13 = ident.get('identifier')
+                    elif ident.get('type').upper() == 'ISBN_10':
+                        book.isbn10 = ident.get('identifier')
+
+            # author(s)
+            if 'authors' in vol_info.keys():
+                for author_name in vol_info.get('authors'):
+                    book.authors.append(Author(author_name))
+
+            # categories
+            if 'categories' in vol_info.keys():
+                for category_name in vol_info.get('categories'):
+                    book.categories.append(Category(category_name))
+
+            # thumbnail
+            if 'imageLinks' in vol_info.keys():
+                book.thumbnail_url = \
+                    vol_info.get('imageLinks').get('smallthumbnail') \
+                    or vol_info.get('imageLinks').get('thumbnail')
+
+            # preview link
+            book.preview_url = vol_info.get('previewLink')
+
+            if book and book.title:
+                found_books.append(book)
+
+        return found_books
+
+    def lookup_by_related_isbn(self, isbn):
+        """
+        Lookup related ISBN for the same work.
+
+        :param1 isbn: (str)
+        The isbn to lookup.
+        """
+        found_on_google = []
+
+        # xISNB
+        xisbn_url = 'http://xisbn.worldcat.org/webservices/xid/isbn/{}' + \
+            '?method=getEditions&format=json'
+
+        xisbn_result = requests.get(xisbn_url.format(isbn)).json()
+
+        if xisbn_result and xisbn_result.get('stat').lower() == 'ok':
+            for risbn in xisbn_result.get('list'):
+                found_on_google += \
+                    self.search_google_books(risbn.get('isbn')[0], None)
+                if found_on_google:
+                    return found_on_google
+
+        # libraryThing
+        lib_thing_url = 'http://www.librarything.com/api/thingISBN/{}'
+        lt_result = ET.fromstring(
+            requests.get(lib_thing_url.format(isbn)).text)
+
+        for data in lt_result.getiterator('isbn'):
+            found_on_google += self.search_google_books(data.text, None)
+            if found_on_google:
+                return found_on_google
+
+        return found_on_google
+
+    def lookup_title(self, isbn):
+        """
+        Lookup book title by ISBN.
+
+        :param1 isbn: (str)
+        The isbn to lookup.
+        """
+        # ebay
+        ebay_url = 'http://svcs.ebay.com/services/search/FindingService/v1' + \
+            '?OPERATION-NAME=findItemsAdvanced&RESPONSE-DATA-FORMAT=JSON' + \
+            '&SECURITY-APPNAME=YoussefS-BPSLibra-PRD-d8e35c535-22a507b2' + \
+            '&GLOBAL-ID=EBAY-GB&categoryId=267&keywords={}'
+        ebay_result = requests.get(ebay_url.format(isbn)).json()
+
+        if ebay_result and ebay_result.get('findItemsAdvancedResponse')[0]\
+           .get('ack')[0].lower() == 'success' and \
+           int(ebay_result.get('findItemsAdvancedResponse')[0]
+                .get('searchResult')[0].get('@count')) > 0:
+            return ebay_result.get('findItemsAdvancedResponse')[0]\
+                .get('searchResult')[0].get('item')[0].get('title')[0]\
+                .replace(isbn, '')
+
+        # isbndb
+        # 'http://isbndb.com/api/books.xml?access_key=I66ZXC9F' + \
+        # '&index1=isbn&value1=0596002068'
+        isbndb_url = 'http://isbndb.com/api/v2/json/I66ZXC9F/books?q={}'
+        isbndb_result = requests.get(isbndb_url.format(isbn)).json()
+
+        if isbndb_result and not isbndb_result.get('error') and \
+           isbndb_result.get('result_count') > 0:
+            return isbndb_result.get('data')[0].get('title')
+
+        # isbnplus
+        isbnp_url = 'https://api-2445581351187.apicast.io/search?q={}' + \
+            '&p=1&app_id=9b8a1ca4&app_key=0914addb7cc8d5e565b7955e3d6446aa'
+        isbnp_result = ET.fromstring(requests.get(isbnp_url.format(isbn)).text)
+
+        if isbnp_result and isbnp_result.get('status') == 'ok' and \
+           int(isbnp_result[0].find('count').text) > 0:
+            return isbnp_result[0].find('results')\
+                .find('book').find('title').text
