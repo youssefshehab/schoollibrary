@@ -5,12 +5,12 @@
 from urllib import request as urllib_request
 import re
 from flask import Blueprint, flash, redirect, render_template, request
-from flask_login import login_required, current_user
-from sqlalchemy import exc, or_, update
-from bpslibrary import login_manager
+from flask_login import current_user
+from sqlalchemy import exc, or_
+# from bpslibrary import login_manager
 from bpslibrary.database import db_session
 from bpslibrary.forms import NewLoanForm, LoanReturnForm
-from bpslibrary.models import Author, Book, Category, Classroom, Pupil
+from bpslibrary.models import Author, Book, Category, Pupil
 from bpslibrary.utils.barcode import scan_for_isbn
 from bpslibrary.utils.apihandler import APIClient
 from bpslibrary.utils.permission import admin_access_required
@@ -37,7 +37,7 @@ def lookup_book():
         found_books = []
         isbns = set()
         barcode_isbn = []
-        input_isbn = request.form['isbn'].split(',')
+        input_isbn = request.form['isbn'].strip().split(',')
         book_title = request.form['book_title'].strip()
         barcode_file = None
         try:
@@ -48,6 +48,7 @@ def lookup_book():
 
             if barcode_isbn or input_isbn or book_title:
                 isbns = set(input_isbn + barcode_isbn)
+                isbns.discard('')
                 api_client = APIClient(isbns, book_title)
                 found_books = api_client.find_books()
 
@@ -57,7 +58,8 @@ def lookup_book():
         return render_template('add_book.html',
                                found_books=found_books,
                                search_title=book_title,
-                               search_isbn=', '.join(isbns))
+                               search_isbn=','.join(isbns)
+                               if bool(isbns) else '')
 
 
 @mod.route('/add', methods=['POST'])
@@ -103,9 +105,9 @@ def add_book():
         session.commit()
 
         flash("The book has been added to the library successfully!")
-    except Exception as e:
+    except RuntimeError as rte:
         error_message = "Something has gone wrong!"
-        if isinstance(e, exc.IntegrityError):
+        if isinstance(rte, exc.IntegrityError):
             error_message += "<br>It seems that the book '%s' "\
                 "already exists in the library." % book.title
 
@@ -185,8 +187,8 @@ def update_book():
         session.commit()
 
         flash("The book has been updated successfully!")
-    except Exception as e:
-        flash("Something has gone wrong! <br>%s" % str(e), 'error')
+    except RuntimeError as rte:
+        flash("Something has gone wrong! <br>%s" % str(rte), 'error')
 
     return redirect('books/edit')
 
@@ -252,7 +254,7 @@ def find_books():
 
 
 def init_loan_forms():
-    """Initialises a new_loan and loan_return forms."""
+    """Initialise a new_loan and loan_return forms."""
     session = db_session()
 
     new_loan_form = None
