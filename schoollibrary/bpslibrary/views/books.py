@@ -6,6 +6,7 @@ from urllib import request as urllib_request
 import re
 from flask import Blueprint, flash, redirect, render_template, request
 from flask_login import current_user
+from flask_paginate import Pagination, get_page_parameter
 from sqlalchemy import exc, or_
 # from bpslibrary import login_manager
 from bpslibrary.database import db_session
@@ -194,7 +195,7 @@ def update_book():
 
 
 @mod.route('/view', methods=['GET'])
-def view_books():
+def view_books(books=None):
     """Display books in the library.
 
     Defaults to displaying available books only.
@@ -203,33 +204,36 @@ def view_books():
     """
     session = db_session()
 
+    search_terms = []
+
+    for book_title in session.query(Book.title).distinct():
+        search_terms.append(book_title[0])
+
+    for category_name in session.query(Category.name).distinct():
+        search_terms.append(category_name[0])
+
+    for author_name in session.query(Author.name).distinct():
+        search_terms.append(author_name[0])
+
+    search_terms.sort()
+
     new_loan_form, loan_return_form = init_loan_forms()
 
+    page = request.args.get(get_page_parameter(), type=int, default=1)
     include_unavailable = request.args.get('include-unavailable')
-    if include_unavailable:
-        books = session.query(Book).order_by(Book.title)
-    else:
-        books = session.query(Book).filter(Book.is_available == 1).\
-            order_by(Book.title)
-    return render_template('view_book.html',
-                           books=books,
-                           new_loan_form=new_loan_form,
-                           loan_return_form=loan_return_form)
-
-
-@mod.route('/find', methods=['POST'])
-def find_books():
-    """Find books in the library based on the search term.
-
-    Search term can be a full or partial book title, author name or
-    category name.
-    """
-    search_term = request.form["search_term"]
-
-    if search_term and search_term.strip():
-        search_term = '%' + search_term.strip() + '%'
-        session = db_session()
-
+    search_term = request.args.get('q')
+    if search_term:
+        search_term = '%' + search_term + '%'
+        total = session.query(Book).\
+            join(Author.books).\
+            filter(or_(Book.title.ilike(search_term),
+                       Author.name.ilike(search_term))).\
+            union(
+                session.query(Book).
+                join(Category.books).
+                filter(or_(Book.title.ilike(search_term),
+                           Category.name.ilike(search_term)))
+            ).count()
         books = session.query(Book).\
             join(Author.books).\
             filter(or_(Book.title.ilike(search_term),
@@ -239,18 +243,38 @@ def find_books():
                 join(Category.books).
                 filter(or_(Book.title.ilike(search_term),
                            Category.name.ilike(search_term)))
-            ).\
-            order_by(Book.title)
+            ).order_by(Book.title).limit(10).offset((page - 1) * 10)
+    elif include_unavailable:
+        total = session.query(Book.id).count()
+        books = session.query(Book).order_by(Book.title).\
+            limit(10).offset((page - 1) * 10)
+    else:
+        total = session.query(Book).filter(Book.is_available == 1).count()
+        books = session.query(Book).filter(Book.is_available == 1).\
+            order_by(Book.title).limit(10).offset((page - 1) * 10)
 
-    if not search_term or not books:
-        return view_books()
-
-    new_loan_form, loan_return_form = init_loan_forms()
+    pagination = Pagination(page=page, total=total, css_framework="bootstrap3")
 
     return render_template('view_book.html',
                            books=books,
                            new_loan_form=new_loan_form,
-                           loan_return_form=loan_return_form)
+                           loan_return_form=loan_return_form,
+                           pagination=pagination,
+                           search_terms=search_terms)
+
+
+@mod.route('/find', methods=['GET', 'POST'])
+def find_books():
+    """Find books in the library based on the search term.
+
+    Search term can be a full or partial book title, author name or
+    category name.
+    """
+    search_term = request.form["search_term"]
+    if search_term:
+        return redirect('books/view?q=' + search_term)
+    else:
+        return view_books()
 
 
 def init_loan_forms():

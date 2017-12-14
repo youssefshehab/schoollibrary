@@ -9,12 +9,12 @@ setup(
         'flask_bcrypt',
         'flask_login',
         'flask_wtf',
-        'wtforms',
-        'sqlalchemy',
         'numpy',
         'pillow',
-        'zbar_py',
         'pyisbn',
-        'uwsgi'
+        'sqlalchemy',
+        'uwsgi',
+        'wtforms',
+        'zbar_py',
     ],
 )
