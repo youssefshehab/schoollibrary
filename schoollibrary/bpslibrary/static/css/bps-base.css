@@ -88,6 +88,7 @@ h1{
 
 .logo {
     float: right;
+    max-height: 100px;
 }
 
 .text-muted-green{
