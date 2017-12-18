@@ -8,7 +8,7 @@ from flask import Blueprint, flash, redirect, render_template, request
 from flask_login import current_user
 from flask_paginate import Pagination, get_page_parameter
 from sqlalchemy import exc, or_
-# from bpslibrary import login_manager
+from bpslibrary import app
 from bpslibrary.database import db_session
 from bpslibrary.forms import NewLoanForm, LoanReturnForm
 from bpslibrary.models import Author, Book, Category, Pupil
@@ -18,7 +18,9 @@ from bpslibrary.utils.permission import admin_access_required
 
 
 mod = Blueprint('books', __name__, url_prefix='/books')
-IMG_DIR = 'bpslibrary/static/img/'
+THUMBNAILS_ABSOLUTE_DIR = app.config['THUMBNAILS_ABSOLUTE_DIR']
+THUMBNAILS_DIR = app.config['THUMBNAILS_DIR']
+PER_PAGE = app.config['PER_PAGE']
 
 
 @mod.route('/')
@@ -97,7 +99,7 @@ def add_book():
                      if re.match(r'\w', c)]
             image_name = ''.join(title) + book.isbn13 + '.jpg'
 
-            img = open(IMG_DIR + image_name, 'wb')
+            img = open(THUMBNAILS_ABSOLUTE_DIR + image_name, 'wb')
             img.write(urllib_request.urlopen(thumbnail_url).read())
             book.thumbnail_url = image_name
 
@@ -167,6 +169,7 @@ def edit_book():
     result = render_template('edit_book.html',
                              search_isbn=search_isbn,
                              search_title=search_title,
+                             thumbnails_dir=THUMBNAILS_DIR,
                              found_books=sorted(found_books,
                                                 key=lambda b: b.title))
     return result
@@ -243,24 +246,29 @@ def view_books(books=None):
                 join(Category.books).
                 filter(or_(Book.title.ilike(search_term),
                            Category.name.ilike(search_term)))
-            ).order_by(Book.title).limit(10).offset((page - 1) * 10)
+            ).order_by(Book.title).\
+            limit(PER_PAGE).offset((page - 1) * PER_PAGE)
     elif include_unavailable:
         total = session.query(Book.id).count()
         books = session.query(Book).order_by(Book.title).\
-            limit(10).offset((page - 1) * 10)
+            limit(PER_PAGE).offset((page - 1) * PER_PAGE)
     else:
         total = session.query(Book).filter(Book.is_available == 1).count()
         books = session.query(Book).filter(Book.is_available == 1).\
-            order_by(Book.title).limit(10).offset((page - 1) * 10)
+            order_by(Book.title).limit(PER_PAGE).offset((page - 1) * PER_PAGE)
 
-    pagination = Pagination(page=page, total=total, css_framework="bootstrap3")
+    pagination = Pagination(page=page,
+                            total=total,
+                            per_page=PER_PAGE,
+                            css_framework="bootstrap3")
 
     return render_template('view_book.html',
                            books=books,
                            new_loan_form=new_loan_form,
                            loan_return_form=loan_return_form,
                            pagination=pagination,
-                           search_terms=search_terms)
+                           search_terms=search_terms,
+                           thumbnails_dir=THUMBNAILS_DIR)
 
 
 @mod.route('/find', methods=['GET', 'POST'])
@@ -274,7 +282,7 @@ def find_books():
     if search_term:
         return redirect('books/view?q=' + search_term)
     else:
-        return view_books()
+        return redirect('books/view')
 
 
 def init_loan_forms():

@@ -34,7 +34,7 @@
                     <a data-toggle="collapse" href="#found-book-{{ loop.index }}" >
                         <div class="row">
                             <div class="col-sm-2">
-                                <img class="img-responsive img-thumbnail" src="{{ url_for('static', filename='img/' + book.thumbnail_url) }}">
+                                <img class="img-responsive img-thumbnail" src="{{ url_for('static', filename=thumbnails_dir + book.thumbnail_url) }}">
                             </div>
                             <div>
                                 <br>
