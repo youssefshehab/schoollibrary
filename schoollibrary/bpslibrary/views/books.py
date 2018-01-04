@@ -4,6 +4,7 @@
 
 from urllib import request as urllib_request
 import re
+import sqlite3
 from flask import Blueprint, flash, redirect, render_template, request
 from flask_login import current_user
 from flask_paginate import Pagination, get_page_parameter
@@ -15,7 +16,7 @@ from bpslibrary.models import Author, Book, Category, Pupil
 from bpslibrary.utils.barcode import scan_for_isbn
 from bpslibrary.utils.apihandler import APIClient
 from bpslibrary.utils.permission import admin_access_required
-
+from bpslibrary.utils.enums import BookLocation
 
 mod = Blueprint('books', __name__, url_prefix='/books')
 THUMBNAILS_ABSOLUTE_DIR = app.config['THUMBNAILS_ABSOLUTE_DIR']
@@ -71,7 +72,10 @@ def add_book():
     """Add a book to the library."""
     try:
         book = Book()
-        book.is_available = 1
+        # defaults
+        book.is_available = True
+        book.current_location = BookLocation.LIBRARY.value
+
         book.title = request.form['book_title'].strip()
         book.isbn10 = request.form['isbn10'].strip()
         book.isbn13 = request.form['isbn13'].strip()
@@ -93,15 +97,15 @@ def add_book():
                 category = Category(category_name)
             book.categories.append(category)
 
-        thumbnail_url = request.form['thumbnail_url'].strip()
-        if thumbnail_url:
+        book.thumbnail_url = request.form['thumbnail_url'].strip()
+        if book.thumbnail_url:
             title = [c for c in book.title.replace(' ', '_')
                      if re.match(r'\w', c)]
             image_name = ''.join(title) + book.isbn13 + '.jpg'
 
             img = open(THUMBNAILS_ABSOLUTE_DIR + image_name, 'wb')
-            img.write(urllib_request.urlopen(thumbnail_url).read())
-            book.thumbnail_url = image_name
+            img.write(urllib_request.urlopen(book.thumbnail_url).read())
+            book.image_name = image_name
 
         session = db_session()
         session.add(book)
@@ -271,7 +275,7 @@ def view_books(books=None):
                            thumbnails_dir=THUMBNAILS_DIR)
 
 
-@mod.route('/find', methods=['GET', 'POST'])
+@mod.route('/find', methods=['POST'])
 def find_books():
     """Find books in the library based on the search term.
 
@@ -279,10 +283,7 @@ def find_books():
     category name.
     """
     search_term = request.form["search_term"]
-    if search_term:
-        return redirect('books/view?q=' + search_term)
-    else:
-        return redirect('books/view')
+    return redirect('books/view?q=' + search_term)
 
 
 def init_loan_forms():
@@ -301,3 +302,112 @@ def init_loan_forms():
         loan_return_form = LoanReturnForm()
 
     return new_loan_form, loan_return_form
+
+
+@mod.route('/autoload', methods=['GET', 'POST'])
+def auto_load_books():
+    """Automated book loading.
+
+    Combining the lookup and add functions, this function aims at bulk
+    loading of books in the background.
+    """
+    session = db_session()
+
+    lookups = request.args.get('n')
+
+    # no orm is required so directly query the db.
+    db_cur = sqlite3.connect(
+        app.config['DATABASE_URI'].replace('sqlite:///', '')).cursor()
+    # db_cursor = db_connection.cursor()
+    lookup_isbn_sql = """
+        SELECT DISTINCT isbn
+        FROM isbn_lookup
+        WHERE status IS NULL
+        OR status NOT LIKE '%SUCCESS%'
+        LIMIT {0};""".format(int(lookups) if lookups else 2000)
+    db_cur.execute(lookup_isbn_sql)
+    lookup_isbns = db_cur.fetchall()
+
+    # lookup books
+    succeeded = []
+    errored = []
+    for isbn in lookup_isbns:
+        try:
+            api_client = APIClient(isbn, None)
+            found_books = api_client.find_books(direct_search_only=True)
+
+            # to ensure only the right book is added, only search resulting
+            # yielding 1 result is accepted.
+            if len(found_books) != 1:
+                raise ValueError("search did not yield a single result.")
+
+            # now we add the book.
+            book = found_books[0]
+
+            # defaults
+            book.is_available = True
+            book.current_location = BookLocation.LIBRARY.value
+
+            image_name = None
+            if book.thumbnail_url:
+                title = [c for c in book.title.replace(' ', '_')
+                         if re.match(r'\w', c)]
+                image_name = ''.join(title) + book.isbn13 + '.jpg'
+
+                img = open(THUMBNAILS_ABSOLUTE_DIR + image_name, 'wb')
+                img.write(urllib_request.urlopen(book.thumbnail_url).read())
+            book.image_name = image_name if image_name else ''
+
+            for i in range(len(book.authors)):
+                lookup_author = Author.query.filter(
+                    Author.name == book.authors[i].name).first()
+                if lookup_author:
+                    book.authors[i] = lookup_author
+
+            categories = []
+            for category in book.categories:
+                lookup_category = Category.query.filter(
+                    Category.name == category.name).first()
+                if not lookup_category:
+                    category = category
+            book.categories = categories
+
+            session.add(book)
+            succeeded.append(isbn[0])
+
+        except ValueError as e:
+            errored.append((isbn[0], str(e)))
+            continue
+
+    session.commit()
+
+    # update the lookup table
+    success_sql = """UPDATE isbn_lookup
+                    SET status = 'SUCCESS_DIRECT',
+                        last_check = CURRENT_TIMESTAMP
+                    WHERE isbn in ('%s');""" % "','".join(
+                        str(i) for i in succeeded)
+    db_connection = sqlite3.connect(
+        app.config['DATABASE_URI'].replace('sqlite:///', ''))
+    db_connection.cursor().execute(success_sql)
+    db_connection.commit()
+
+    # record errors
+    errors_sql = """
+        UPDATE isbn_lookup
+            SET errors = CASE isbn """
+    for err_isbn, error in errored:
+        errors_sql += " WHEN '%s' THEN errors + '|%s'" % (err_isbn, error)
+    errors_sql += """ ELSE errors END,
+        last_check = CURRENT_TIMESTAMP,
+        status = 'FAILED_DIRECT'
+        WHERE isbn IN ('%s');""" % "','".join([str(i) for i, e in errored])
+
+    db_connection = sqlite3.connect(
+        app.config['DATABASE_URI'].replace('sqlite:///', ''))
+    db_connection.cursor().execute(errors_sql)
+
+    db_connection.commit()
+    db_connection.close()
+
+    return redirect('books/view')

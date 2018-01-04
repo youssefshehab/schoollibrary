@@ -1,32 +1,15 @@
+"""All forms used within the system."""
 
 
-from urllib.parse import urlparse, urljoin
 from wtforms.fields import (StringField, PasswordField, SelectField,
                             IntegerField, BooleanField, FileField)
 from wtforms.validators import Optional, DataRequired
-from flask import request
 from flask_wtf import FlaskForm
-from bpslibrary.database import get_classroom_names
-
-'''
-class BookForm(ModelForm):
-    class Meta:
-        model = Book
-        include = ['authors']
-
-    thumbnail_url = StringField()
-    preview_url = StringField()
-'''
-
-
-def is_url_safe(target_url: str):
-    host_url = urlparse(request.host_url)
-    check_url = urlparse(urljoin(request.host_url, target_url))
-    return host_url.netloc == check_url.netloc and \
-        check_url.scheme in ('http', 'https')
 
 
 class LoginForm(FlaskForm):
+    """Logging on form."""
+
     username = StringField(label='Username',
                            validators=[Optional()],
                            description="Provided by administration.")
@@ -34,8 +17,11 @@ class LoginForm(FlaskForm):
 
 
 class NewAccessForm(FlaskForm):
-    """"""
-    classroom = SelectField(label='Classroom', validators=[Optional()], coerce=int)
+    """Form to setup new access."""
+
+    classroom = SelectField(label='Classroom',
+                            validators=[Optional()],
+                            coerce=int)
     username = StringField(label='Username', validators=[DataRequired()])
     password = StringField(label='Password', validators=[DataRequired()])
     is_admin = BooleanField(label='Admin', validators=[Optional()])
@@ -48,6 +34,8 @@ class NewAccessForm(FlaskForm):
 
 
 class NewLoanForm(FlaskForm):
+    """Form for book loans."""
+
     book_id = IntegerField(validators=[DataRequired()])
     book_isbn = StringField(label='ISBN', validators=[DataRequired()])
     user_id = IntegerField(validators=[DataRequired()])
@@ -62,6 +50,8 @@ class NewLoanForm(FlaskForm):
 
 
 class LoanReturnForm(FlaskForm):
+    """Form for returning books."""
+
     book_id = IntegerField(validators=[DataRequired()])
     barcode_img = FileField(label='Scan Barcode',
                             validators=[DataRequired()],

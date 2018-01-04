@@ -4,7 +4,7 @@ from flask import Blueprint, render_template
 from bpslibrary.database import db_session
 from bpslibrary.models import Author, Book, Category
 
-mod = Blueprint('index', __name__)
+mod = Blueprint('index', __name__)  # pylint: disable=C0103
 
 
 @mod.route('/')

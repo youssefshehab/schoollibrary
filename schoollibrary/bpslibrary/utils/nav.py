@@ -11,7 +11,7 @@ from bpslibrary import login_manager
 
 
 def is_safe_url(target_url):
-    """Determines if the url is safe.
+    """Determine if the url is safe.
 
     To protect from CSRF attacks it checks if the `target_url`
     is within the the site, and returns true if it, otherwise

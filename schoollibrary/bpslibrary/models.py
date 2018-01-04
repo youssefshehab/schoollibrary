@@ -1,5 +1,7 @@
 """The library system entities."""
 
+# pylint: disable=C0103
+# pylint: disable=R0903
 
 from sqlalchemy import (Column, String, Integer, Sequence,
                         ForeignKey, Table, Boolean, Date)
@@ -8,18 +10,18 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from flask_login import UserMixin
 from bpslibrary import bcrypt
 from bpslibrary.database import Model
-from bpslibrary.utils.enums import BookLocation
+
 
 # Associations
-book_author_association = \
-    Table('book_author_association',
+book_author = \
+    Table('book_author',
           Model.metadata,
           Column('book_id', Integer, ForeignKey('books.id')),
           Column('author_id', Integer, ForeignKey('authors.id')),
           extend_existing=True)
 
-book_category_association = \
-    Table('book_category_association',
+book_category = \
+    Table('book_category',
           Model.metadata,
           Column('book_id', Integer, ForeignKey('books.id')),
           Column('category_id', Integer, ForeignKey('categories.id')),
@@ -54,10 +56,12 @@ class Classroom(Model):
         return loans
 
     def __init__(self, name):
+        """Initialise new Classroom object."""
         self.name = name
 
     def __repr__(self):
-        return "<Class %r>" % self.name
+        """Classroom representation."""
+        return "<Classroom %r>" % self.name
 
 
 class Pupil(Model):
@@ -81,9 +85,11 @@ class Pupil(Model):
     loans = relationship('Loan', back_populates='pupil')
 
     def __init__(self, name):
+        """Initialise new Pupil object."""
         self.name = name
 
     def __repr__(self):
+        """Pupil object representation."""
         return "<Pupil %r>" % self.name
 
 
@@ -103,7 +109,7 @@ class Category(Model):
 
     # relationships
     books = relationship('Book',
-                         secondary=book_category_association,
+                         secondary=book_category,
                          back_populates='categories')
 
     def __init__(self, name):
@@ -111,6 +117,7 @@ class Category(Model):
         self.name = name
 
     def __repr__(self):
+        """Category object representation."""
         return "<Category %r>" % self.name
 
 
@@ -130,13 +137,15 @@ class Author(Model):
 
     # relationships
     books = relationship('Book',
-                         secondary=book_author_association,
+                         secondary=book_author,
                          back_populates='authors')
 
     def __init__(self, name):
+        """Initialise an Author object."""
         self.name = name
 
     def __repr__(self):
+        """Representation of Author object."""
         return "<Author %r>" % self.name
 
 
@@ -160,14 +169,15 @@ class Book(Model):
     availability = Column(String)
     is_available = Column(Boolean)
     current_location = Column(String)
+    image_name = Column(String)
 
     # relationships
     categories = relationship('Category',
-                              secondary=book_category_association,
+                              secondary=book_category,
                               back_populates='books')
 
     authors = relationship('Author',
-                           secondary=book_author_association,
+                           secondary=book_author,
                            back_populates='books')
     loans = relationship('Loan', back_populates='book')
 
@@ -192,12 +202,11 @@ class Book(Model):
         """First 150 characters from the description."""
         if self.description and self.description.strip():
             return self.description[:150] + "..."
-        else:
-            return "..."
+        return "..."
 
     @property
     def current_loan(self):
-        """Current open loan."""
+        """Open loan currently."""
         current_loan = [loan for loan in
                         sorted(self.loans, key=lambda l: l.id, reverse=True)
                         if not loan.end_date]
@@ -205,6 +214,7 @@ class Book(Model):
         return current_loan[0] if current_loan else None
 
     def __repr__(self):
+        """Book object representation."""
         return "<Book %r>" % self.title
 
 
@@ -231,27 +241,28 @@ class User(Model, UserMixin):
 
     @hybrid_property
     def password(self):
+        """Hashed password."""
         return self._password
 
     @password.setter
     def _set_password(self, password_text):
-        """
-        Sets the password property after hashing it.
-        
+        """Set the password property after hashing it.
+
         :param1: password_text (str)
         The password to be hashed.
         """
         self._password = bcrypt.generate_password_hash(password_text)
 
     def is_correct_password(self, password_text):
-        """
-        Check the hash of password_text against the saved hash.
-        
+        """Check the hash of password_text against the saved hash.
+
+        :param1: password_text (str)
+        The password to check.
         """
         return bcrypt.check_password_hash(self._password, password_text)
 
     def get_id(self):
-        """Retrieves the user by id."""
+        """Retrieve the user by id."""
         return str(self.id)
 
 
@@ -274,5 +285,6 @@ class Loan(Model):
     end_date = Column(Date, nullable=True)
 
     def __repr__(self):
+        """Loan object representation."""
         return "<Loan %d (book %d) %s-%s" %\
             (self.id, self.book_id, self.start_date, self.end_date)

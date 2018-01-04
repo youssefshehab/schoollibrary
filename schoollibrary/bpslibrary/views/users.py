@@ -1,17 +1,18 @@
-"""A view top handle all user related functionalities.
+"""A view to handle all user related functionalities.
 
 It includes user and access management functions.
 """
 
+# for some reason, pylint is giving error on wtforms StringField
+# pylint: disable=E1101
+
+
 import csv
 import os
-from flask import (Blueprint, flash, redirect,
-                   render_template, request, url_for)
-from flask_login import login_user, logout_user, current_user, login_required
+from flask import Blueprint, flash, redirect, render_template, request
+from flask_login import login_user, logout_user, current_user
 from werkzeug.utils import secure_filename
-from sqlalchemy import update
-from bpslibrary import login_manager
-from bpslibrary.database import db_session, get_classroom_names
+from bpslibrary.database import db_session
 from bpslibrary.models import Classroom, Pupil, User
 from bpslibrary.forms import LoginForm, NewAccessForm
 from bpslibrary.utils.nav import redirect_to_previous
@@ -21,15 +22,14 @@ from bpslibrary.utils.permission import admin_access_required
 UPLOAD_DIR = '/tmp/'
 ALLOWED_EXTENSIONS = set(['csv'])
 
+# pylint: disable=C0103
 mod = Blueprint('users', __name__, url_prefix='/users')
 
 
 @mod.route('/access', methods=['GET'])
 @admin_access_required
 def access():
-    """
-    Renders the homepage of user access.
-    """
+    """Render the homepage of user access."""
     return render_template('access.html')
 
 
@@ -94,7 +94,7 @@ def update_db(classroom_file):
 
             session.commit()
             return True
-    except Exception as err:
+    except Exception as err:  # pylint: disable=W0703
         flash("Something has gone wrong!<br>" + str(err), 'error')
     return False
 
