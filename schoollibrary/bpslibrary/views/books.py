@@ -3,6 +3,7 @@
 # pylint: disable=C0103
 
 from urllib import request as urllib_request
+from time import sleep
 import re
 import sqlite3
 from flask import Blueprint, flash, redirect, render_template, request
@@ -312,34 +313,26 @@ def auto_load_books():
     loading of books in the background.
     """
     session = db_session()
-
-    lookups = request.args.get('n')
-
-    # no orm is required so directly query the db.
-    db_cur = sqlite3.connect(
-        app.config['DATABASE_URI'].replace('sqlite:///', '')).cursor()
-    # db_cursor = db_connection.cursor()
-    lookup_isbn_sql = """
-        SELECT DISTINCT isbn
-        FROM isbn_lookup
-        WHERE status IS NULL
-        OR status NOT LIKE '%SUCCESS%'
-        LIMIT {0};""".format(int(lookups) if lookups else 2000)
-    db_cur.execute(lookup_isbn_sql)
-    lookup_isbns = db_cur.fetchall()
+    lookup_limit = request.args.get('n')
 
     # lookup books
     succeeded = []
-    errored = []
-    for isbn in lookup_isbns:
-        try:
+    failed = []
+
+    try:
+        for isbn in execute_sql('fetch_isbn', lookup_limit):
             api_client = APIClient(isbn, None)
             found_books = api_client.find_books(direct_search_only=True)
+
+            # ensure we don't exceed google api usage limit
+            sleep(1)
 
             # to ensure only the right book is added, only search resulting
             # yielding 1 result is accepted.
             if len(found_books) != 1:
-                raise ValueError("search did not yield a single result.")
+                failed.append(
+                    (isbn[0], "search results %d" % len(found_books)))
+                continue
 
             # now we add the book.
             book = found_books[0]
@@ -348,66 +341,86 @@ def auto_load_books():
             book.is_available = True
             book.current_location = BookLocation.LIBRARY.value
 
-            image_name = None
             if book.thumbnail_url:
-                title = [c for c in book.title.replace(' ', '_')
-                         if re.match(r'\w', c)]
-                image_name = ''.join(title) + book.isbn13 + '.jpg'
-
+                image_name = ''.join(
+                    [c for c in book.title.replace(' ', '_')
+                     if re.match(r'\w', c)]) + book.isbn13 + '.jpg'
                 img = open(THUMBNAILS_ABSOLUTE_DIR + image_name, 'wb')
                 img.write(urllib_request.urlopen(book.thumbnail_url).read())
-            book.image_name = image_name if image_name else ''
+                book.image_name = image_name
 
             for i in range(len(book.authors)):
                 lookup_author = Author.query.filter(
                     Author.name == book.authors[i].name).first()
                 if lookup_author:
+                    book.authors[i] = None
                     book.authors[i] = lookup_author
 
-            categories = []
-            for category in book.categories:
+            for i in range(len(book.categories)):
                 lookup_category = Category.query.filter(
-                    Category.name == category.name).first()
-                if not lookup_category:
-                    category = category
-            book.categories = categories
+                    Category.name == book.categories[i].name).first()
+                if lookup_category:
+                    book.categories[i] = None
+                    book.categories[i] = lookup_category
 
             session.add(book)
+            session.commit()
             succeeded.append(isbn[0])
 
-        except ValueError as e:
-            errored.append((isbn[0], str(e)))
-            continue
+        execute_sql('update_success', succeeded=succeeded)
+        execute_sql('update_failed', failed=failed)
 
-    session.commit()
-
-    # update the lookup table
-    success_sql = """UPDATE isbn_lookup
-                    SET status = 'SUCCESS_DIRECT',
-                        last_check = CURRENT_TIMESTAMP
-                    WHERE isbn in ('%s');""" % "','".join(
-                        str(i) for i in succeeded)
-    db_connection = sqlite3.connect(
-        app.config['DATABASE_URI'].replace('sqlite:///', ''))
-    db_connection.cursor().execute(success_sql)
-    db_connection.commit()
-
-    # record errors
-    errors_sql = """
-        UPDATE isbn_lookup
-            SET errors = CASE isbn """
-    for err_isbn, error in errored:
-        errors_sql += " WHEN '%s' THEN errors + '|%s'" % (err_isbn, error)
-    errors_sql += """ ELSE errors END,
-        last_check = CURRENT_TIMESTAMP,
-        status = 'FAILED_DIRECT'
-        WHERE isbn IN ('%s');""" % "','".join([str(i) for i, e in errored])
-
-    db_connection = sqlite3.connect(
-        app.config['DATABASE_URI'].replace('sqlite:///', ''))
-    db_connection.cursor().execute(errors_sql)
-
-    db_connection.commit()
-    db_connection.close()
+    except Exception as ex:
+        flash("Something has gone wrong! " + str(ex))
+        flash("succeeded %s" % ','.join([str(i) for i in succeeded]))
+        flash("failed %s" % ','.join([str(i) for i in failed]))
 
     return redirect('books/view')
+
+
+def execute_sql(action, lookup_limit=10, failed=None, succeeded=None):
+    """Execute sql to fetch isbns to lookup or update lookup status."""
+    # update the lookup table
+    connection = sqlite3.connect(
+        app.config['DATABASE_URI'].replace('sqlite:///', ''))
+    cursor = connection.cursor()
+    sql = ""
+    if action == 'fetch_isbn':
+        sql = """
+            SELECT DISTINCT isbn
+            FROM isbn_lookup
+            WHERE status IS NULL
+            OR status NOT LIKE '%SUCCESS%'
+            ORDER BY last_check
+            LIMIT {0};
+            """.format(int(lookup_limit))
+        cursor.execute(sql)
+        return cursor.fetchall()
+
+    if action == 'update_success':
+        assert (succeeded is not None), "Succeeded list is None."
+        sql = """
+            UPDATE isbn_lookup
+            SET
+                status = 'SUCCESS_DIRECT',
+                last_check = CURRENT_TIMESTAMP
+            WHERE isbn in ('{0}');
+            """.format("','".join(str(i) for i in succeeded))
+        cursor.execute(sql)
+        connection.commit()
+
+    if action == 'update_failed':
+        assert (failed is not None), "Failed list is None."
+        sql = """
+            UPDATE isbn_lookup
+                SET errors = CASE isbn """
+        for isbn, error in failed:
+            sql += " WHEN '%s' THEN errors + '|%s'" % (isbn, error)
+        sql += """ ELSE errors END,
+            last_check = CURRENT_TIMESTAMP,
+            status = 'FAILED_DIRECT'
+            WHERE isbn IN ('%s');""" % "','".join([str(i) for i, e in failed])
+        cursor.execute(sql)
+        connection.commit()
+
+    connection.close()
