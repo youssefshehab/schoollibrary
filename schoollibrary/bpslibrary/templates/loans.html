@@ -2,15 +2,13 @@
 {% block title %}My Loans - {{ super() }}{% endblock %}
 {% block header %}
 
-{% if new_loan_form %}
-Borrow
-{% elif new_access_form %}
-Setup Access
-{% else %}
-User Access Management
+{% if current_user.is_authenticated and not current_user.is_admin %}
+My Loans
+{% elif if current_user.is_authenticated and current_user.is_admin %}
+All Loans
 {% endif %}
 
 {% endblock %}
 {% block content %}
-    
+
 {% endblock %}
