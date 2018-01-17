@@ -15,7 +15,7 @@ THUMBNAILDIR=`dirname $0`/bpslibrary/static/img/thumbnails
 
 # general opt
 BACKUPDIR=`dirname $0`/backups
-BACKUPDAYS=30
+BACKUPDAYS=5
 
 # run vars
 TIMESTAMP=$(date +'%Y%m%d%H%M%S')

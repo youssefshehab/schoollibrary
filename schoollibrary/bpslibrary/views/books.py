@@ -325,7 +325,7 @@ def auto_load_books():
             found_books = api_client.find_books(direct_search_only=True)
 
             # ensure we don't exceed google api usage limit
-            sleep(1)
+            sleep(20)
 
             # to ensure only the right book is added, only search resulting
             # yielding 1 result is accepted.
@@ -370,8 +370,8 @@ def auto_load_books():
         execute_sql('update_success', succeeded=succeeded)
         execute_sql('update_failed', failed=failed)
 
-    except Exception as ex:
-        flash("Something has gone wrong! " + str(ex))
+    except RuntimeError as rt_error:
+        flash("Something has gone wrong! " + str(rt_error))
         flash("succeeded %s" % ','.join([str(i) for i in succeeded]))
         flash("failed %s" % ','.join([str(i) for i in failed]))
 
