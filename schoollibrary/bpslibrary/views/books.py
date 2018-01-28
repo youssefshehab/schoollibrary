@@ -5,6 +5,7 @@
 from urllib import request as urllib_request
 from time import sleep
 import re
+import random
 import sqlite3
 from flask import Blueprint, flash, redirect, render_template, request
 from flask_login import current_user
@@ -318,14 +319,19 @@ def auto_load_books():
     # lookup books
     succeeded = []
     failed = []
+    counter = 1
 
     try:
         for isbn in execute_sql('fetch_isbn', lookup_limit):
+            # ensure we don't exceed google or amazon api usage limit
+            if counter % 3 == 0:
+                sleep(random.uniform(60, 90))
+            else:
+                sleep(random.uniform(5, 10))
+            counter += 1
+
             api_client = APIClient(isbn, None)
             found_books = api_client.find_books(direct_search_only=True)
-
-            # ensure we don't exceed google api usage limit
-            sleep(20)
 
             # to ensure only the right book is added, only search resulting
             # yielding 1 result is accepted.
@@ -372,9 +378,9 @@ def auto_load_books():
 
     except RuntimeError as rt_error:
         flash("Something has gone wrong! " + str(rt_error))
-        flash("succeeded %s" % ','.join([str(i) for i in succeeded]))
-        flash("failed %s" % ','.join([str(i) for i in failed]))
 
+    flash('success: ' + ','.join(str(i) for i in succeeded))
+    flash('failed: ' + ','.join(str(i) for i, e in failed))
     return redirect('books/view')
 
 
@@ -410,17 +416,20 @@ def execute_sql(action, lookup_limit=10, failed=None, succeeded=None):
         connection.commit()
 
     if action == 'update_failed':
-        assert (failed is not None), "Failed list is None."
-        sql = """
-            UPDATE isbn_lookup
-                SET errors = CASE isbn """
-        for isbn, error in failed:
-            sql += " WHEN '%s' THEN errors + '|%s'" % (isbn, error)
-        sql += """ ELSE errors END,
-            last_check = CURRENT_TIMESTAMP,
-            status = 'FAILED_DIRECT'
-            WHERE isbn IN ('%s');""" % "','".join([str(i) for i, e in failed])
-        cursor.execute(sql)
-        connection.commit()
+        # assert (failed is not None), "Failed list is None."
+        # assert (failed), "Failed list is empty."
+        if failed:
+            sql = """
+                UPDATE isbn_lookup
+                    SET errors = (CASE isbn """
+            for isbn, error in failed:
+                sql += " WHEN '%s' THEN errors + '|%s' " % (isbn, error)
+            sql += """ ELSE errors END),
+                last_check = CURRENT_TIMESTAMP,
+                status = 'FAILED_DIRECT'
+                WHERE isbn IN ('%s');""" % "','".join(
+                    [str(i) for i, e in failed])
+            cursor.execute(sql)
+            connection.commit()
 
     connection.close()
