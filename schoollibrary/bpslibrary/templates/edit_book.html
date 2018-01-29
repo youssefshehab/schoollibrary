@@ -138,6 +138,15 @@
                                 Separate multiple categories with a comma e.g. Nonfiction, Animals
                             </small> 
                         </div>
+                        <div class="form-group">
+                            <label for="ma-category">Book cover</label>
+                            <input id="ma-category" class="form-control" type="text" name="book_thumbnail_url" 
+                                    placeholder="Enter thumbnail url"
+                                    value="{{ book.thumbnail_url }}"> 
+                            <small class="form-text text-muted-green">
+                                The link to the book cover image
+                            </small> 
+                        </div>
                         <button class="bps-btn btn btn-primary" type="submit">Update book</button>
                     </form>
                 </div>

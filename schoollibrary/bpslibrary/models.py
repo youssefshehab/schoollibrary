@@ -210,7 +210,6 @@ class Book(Model):
         current_loan = [loan for loan in
                         sorted(self.loans, key=lambda l: l.id, reverse=True)
                         if not loan.end_date]
-
         return current_loan[0] if current_loan else None
 
     def __repr__(self):

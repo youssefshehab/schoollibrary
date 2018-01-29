@@ -196,9 +196,10 @@ def update_book():
         session = db_session()
 
         update_id = request.form['book_id']
-        update_status = int(request.form['book_status'])
-        update_title = request.form['book_title']
-        update_description = request.form['book_description']
+        update_status = int(request.form['book_status'].strip())
+        update_title = request.form['book_title'].strip()
+        update_description = request.form['book_description'].strip()
+        update_thumbnail_url = request.form['book_thumbnail_url'].strip()
         update_categories = [c.strip() for c
                              in request.form['book_categories'].split(',')]
         update_authors = [a.strip() for a
@@ -229,6 +230,17 @@ def update_book():
         for author_name in update_authors:
             if author_name not in [a.name for a in book.authors]:
                 book.authors.append(Author(author_name))
+
+        # thumbnail
+        if update_thumbnail_url and book.thumbnail_url != update_thumbnail_url:
+            book.thumbnail_url = update_thumbnail_url
+            title = [c for c in book.title.replace(' ', '_')
+                     if re.match(r'\w', c)]
+            image_name = ''.join(title) + book.isbn13 + '.jpg'
+
+            img = open(THUMBNAILS_ABSOLUTE_DIR + image_name, 'wb')
+            img.write(urllib_request.urlopen(book.thumbnail_url).read())
+            book.image_name = image_name
 
         session.commit()
 
