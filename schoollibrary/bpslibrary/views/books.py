@@ -8,17 +8,16 @@ import re
 import random
 import sqlite3
 from flask import Blueprint, flash, redirect, render_template, request
-from flask_login import current_user
 from flask_paginate import Pagination, get_page_parameter
 from sqlalchemy import exc, or_
 from bpslibrary import app
 from bpslibrary.database import db_session
-from bpslibrary.forms import NewLoanForm, LoanReturnForm
-from bpslibrary.models import Author, Book, Category, Pupil
+from bpslibrary.models import Author, Book, Category
 from bpslibrary.utils.barcode import scan_for_isbn
 from bpslibrary.utils.apihandler import APIClient
 from bpslibrary.utils.permission import admin_access_required
 from bpslibrary.utils.enums import BookLocation
+from bpslibrary.views.loans import init_loan_forms
 
 mod = Blueprint('books', __name__, url_prefix='/books')
 THUMBNAILS_ABSOLUTE_DIR = app.config['THUMBNAILS_ABSOLUTE_DIR']
@@ -136,21 +135,27 @@ def edit_book():
     """Update a book in the library."""
     session = db_session()
 
-    if request.method == 'GET':
-        lookup_isbns = []
-        lookup_titles = []
-        books = session.query(Book).distinct().\
-            values(Book.isbn10,
-                   Book.isbn13,
-                   Book.title)
+    lookup_isbns = []
+    lookup_titles = []
+    books = session.query(Book).distinct().\
+        values(Book.isbn10,
+               Book.isbn13,
+               Book.title)
 
-        for book in books:
+    for book in books:
+        if book[0]:
             lookup_isbns.append(book[0])
+        if book[1]:
             lookup_isbns.append(book[1])
+        if book[2]:
             lookup_titles.append(book[2])
 
+    if lookup_isbns:
         lookup_isbns.sort()
+    if lookup_titles:
         lookup_titles.sort()
+
+    if request.method == 'GET':
         return render_template('edit_book.html',
                                lookup_isbns=lookup_isbns,
                                lookup_titles=lookup_titles)
@@ -164,15 +169,17 @@ def edit_book():
         if search_title and search_title.strip():
             search_term = '%' + search_title.strip() + '%'
             found_books = session.query(Book).\
-                filter(Book.title.ilike(search_term))
+                filter(Book.title.ilike(search_term)).all()
 
         if search_isbn and search_isbn.strip():
             search_term = '%' + search_isbn.strip() + '%'
             found_books = found_books + session.query(Book).\
                 filter(or_(Book.isbn10.ilike(search_term),
-                           Book.isbn13.ilike(search_term)))
+                           Book.isbn13.ilike(search_term))).all()
 
     result = render_template('edit_book.html',
+                             lookup_isbns=lookup_isbns,
+                             lookup_titles=lookup_titles,
                              search_isbn=search_isbn,
                              search_title=search_title,
                              thumbnails_dir=THUMBNAILS_DIR,
@@ -188,12 +195,41 @@ def update_book():
     try:
         session = db_session()
 
-        book_id = request.form['book_id']
-        book_status = int(request.form['book_status'])
+        update_id = request.form['book_id']
+        update_status = int(request.form['book_status'])
+        update_title = request.form['book_title']
+        update_description = request.form['book_description']
+        update_categories = [c.strip() for c
+                             in request.form['book_categories'].split(',')]
+        update_authors = [a.strip() for a
+                          in request.form['book_authors'].split(',')]
 
-        session.query(Book).filter(Book.id == book_id).update(
-            {Book.is_available: book_status},
-            synchronize_session=False)
+        book = session.query(Book).filter(Book.id == update_id).first()
+
+        book.title = update_title
+        book.description = update_description
+        book.is_available = update_status
+
+        # update categories
+        # removed
+        for category in book.categories:
+            if category.name not in update_categories:
+                book.categories.remove(category)
+        # added
+        for category_name in update_categories:
+            if category_name not in [c.name for c in book.categories]:
+                book.categories.append(Category(category_name))
+
+        # update authors
+        # removed
+        for author in book.authors:
+            if author.name not in update_authors:
+                book.authors.remove(author)
+        # added
+        for author_name in update_authors:
+            if author_name not in [a.name for a in book.authors]:
+                book.authors.append(Author(author_name))
+
         session.commit()
 
         flash("The book has been updated successfully!")
@@ -286,24 +322,6 @@ def find_books():
     """
     search_term = request.form["search_term"]
     return redirect('books/view?q=' + search_term)
-
-
-def init_loan_forms():
-    """Initialise a new_loan and loan_return forms."""
-    session = db_session()
-
-    new_loan_form = None
-    loan_return_form = None
-
-    if current_user.is_authenticated and current_user.classroom:
-        new_loan_form = NewLoanForm()
-        class_id = current_user.classroom.id
-        new_loan_form.pupil_id.choices = \
-            [(p[0], p[1]) for p in session.query(Pupil.id, Pupil.name).
-             filter(Pupil.classroom_id == class_id)]
-        loan_return_form = LoanReturnForm()
-
-    return new_loan_form, loan_return_form
 
 
 @mod.route('/autoload', methods=['GET', 'POST'])

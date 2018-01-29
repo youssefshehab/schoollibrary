@@ -46,7 +46,8 @@
                         <a data-toggle="collapse" data-parent="#found_books" href="#found-book-{{ loop.index }}" >
                             <div class="row">
                                 <div class="col-sm-2">
-                                    <img class="img-responsive img-thumbnail" src="{{ url_for('static', filename=thumbnails_dir + book.thumbnail_url) }}">
+                                    <img class="img-responsive img-thumbnail" 
+                                        src="{{ url_for('static', filename=thumbnails_dir + (book.image_name if book.image_name else 'default_cover.png')) }}">
                                 </div>
                                 <div>
                                     <br>
@@ -107,21 +108,21 @@
                         </div>
                         <div class="form-group">
                             <label for="ma-book-title">Title</label>
-                            <input disabled="disabled" id="ma-book-title" class="form-control" type="text" name="book_title" 
+                            <input id="ma-book-title" class="form-control" type="text" name="book_title" 
                                     placeholder="Enter book title"
                                     value="{{ book.title }}"> 
                         </div>
                         <div class="form-group">
                             <label for="ma-description">Description</label>
-                            <textarea disabled="disabled" id="ma-description" class="form-control" rows="5" name="book_description" 
+                            <textarea id="ma-description" class="form-control" rows="5" name="book_description" 
                                     aria-describedby="ma-description-help">{{ book.description | safe }}</textarea>
                             <small id="ma-description-help" class="help-block text-muted-green">
                                 This is the blurb usually on the back of the book
                             </small>
                         </div>
                         <div class="form-group">
-                            <label for="ma-author">Author</label>
-                            <input disabled="disabled" id="ma-author" class="form-control" type="text" name="book_authors" 
+                            <label for="ma-author">Authors</label>
+                            <input id="ma-author" class="form-control" type="text" name="book_authors" 
                                     placeholder="Enter name of the author(s)"
                                     value="{{ book.authors_names }}">
                             <small class="form-text text-muted-green">
@@ -129,8 +130,8 @@
                             </small> 
                         </div>
                         <div class="form-group">
-                            <label for="ma-category">Category</label>
-                            <input disabled="disabled" id="ma-category" class="form-control" type="text" name="book_categories" 
+                            <label for="ma-category">Categories</label>
+                            <input id="ma-category" class="form-control" type="text" name="book_categories" 
                                     placeholder="Enter category"
                                     value="{{ book.categories_names }}"> 
                             <small class="form-text text-muted-green">
