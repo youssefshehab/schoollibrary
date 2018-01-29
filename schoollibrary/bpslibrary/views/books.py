@@ -200,6 +200,7 @@ def update_book():
         update_title = request.form['book_title'].strip()
         update_description = request.form['book_description'].strip()
         update_thumbnail_url = request.form['book_thumbnail_url'].strip()
+        update_preview_url = request.form['book_preview_url'].strip() 
         update_categories = [c.strip() for c
                              in request.form['book_categories'].split(',')]
         update_authors = [a.strip() for a
@@ -241,6 +242,10 @@ def update_book():
             img = open(THUMBNAILS_ABSOLUTE_DIR + image_name, 'wb')
             img.write(urllib_request.urlopen(book.thumbnail_url).read())
             book.image_name = image_name
+
+        # preview url
+        if update_preview_url and book.preview_url != update_preview_url:
+            book.preview_url = update_preview_url
 
         session.commit()
 

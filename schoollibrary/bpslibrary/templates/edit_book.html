@@ -139,12 +139,21 @@
                             </small> 
                         </div>
                         <div class="form-group">
-                            <label for="ma-category">Book cover</label>
-                            <input id="ma-category" class="form-control" type="text" name="book_thumbnail_url" 
-                                    placeholder="Enter thumbnail url"
+                            <label for="ma-book-cover">Book cover</label>
+                            <input id="ma-book-cover" class="form-control" type="text" name="book_thumbnail_url" 
+                                    placeholder="Enter book cover image link"
                                     value="{{ book.thumbnail_url }}"> 
                             <small class="form-text text-muted-green">
                                 The link to the book cover image
+                            </small> 
+                        </div>
+                        <div class="form-group">
+                            <label for="ma-preview-url">Preview link</label>
+                            <input id="ma-preview-url" class="form-control" type="text" name="book_preview_url" 
+                                    placeholder="Preview link"
+                                    value="{{ book.preview_url }}"> 
+                            <small class="form-text text-muted-green">
+                                The link to preview the book online
                             </small> 
                         </div>
                         <button class="bps-btn btn btn-primary" type="submit">Update book</button>
