@@ -45,8 +45,8 @@ class NewLoanForm(FlaskForm):
                            description="The pupil who will borrow this book.")
     barcode_img = FileField(label='Scan Barcode',
                             validators=[DataRequired()],
-                            description="Take a picture using tablet/phone " +
-                            "camera or upload and image of the barcode.")
+                            description="Take a picture using tablet/smart-" +
+                            "phone camera or upload an image of the barcode.")
 
 
 class LoanReturnForm(FlaskForm):

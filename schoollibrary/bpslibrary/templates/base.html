@@ -33,6 +33,9 @@
                         <ul class="nav navbar-nav">
                             <li><a href="/">Home</a></li>
                             <li><a href="/books/view">View book collection</a></li>
+                            {% if current_user.is_authenticated and not current_user.is_admin %}
+                            <li><a href="/loans/view">My Lonas</a></li>
+                            {% endif %}
                             {% if current_user.is_authenticated and current_user.is_admin %}
                             <li class="dropdown">
                                 <a  href="#" 

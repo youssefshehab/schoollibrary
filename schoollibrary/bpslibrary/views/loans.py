@@ -7,8 +7,10 @@ A view to handle loans and returns of books."""
 from datetime import datetime
 from flask import Blueprint, flash, render_template, request
 from flask_login import login_required, current_user
+from flask_paginate import Pagination, get_page_parameter
 from sqlalchemy import and_
 from werkzeug.utils import secure_filename
+from bpslibrary import app
 from bpslibrary.database import db_session
 from bpslibrary.models import Book, Classroom, Pupil, User, Loan
 from bpslibrary.utils.nav import redirect_to_previous
@@ -16,7 +18,10 @@ from bpslibrary.utils.barcode import scan_for_isbn
 from bpslibrary.forms import NewLoanForm, LoanReturnForm
 from bpslibrary.utils.enums import BookLocation
 
+
 mod = Blueprint('loans', __name__, url_prefix='/loans')
+THUMBNAILS_DIR = app.config['THUMBNAILS_DIR']
+PER_PAGE = app.config['PER_PAGE']
 
 
 @mod.route('/record', methods=['POST'])
@@ -131,8 +136,33 @@ def record_return():
 @login_required
 def view_loans():
     """Displays loans of a book, or of all books."""
-    
-    return redirect_to_previous(True)
+    session = db_session()
+    if current_user.is_admin:
+        found_books = session.query(Book).filter(
+            Book.current_location == BookLocation.LOAN.value).all()
+    else:
+        found_books = session.query(Book).filter(
+            Book.current_location == BookLocation.LOAN.value and
+            Book.id in [l.book_id for l in Classroom.query(
+                Classroom.user_id == current_user.id).open_loans]).all()
+
+    # pagination
+    total = len(found_books)
+    page = request.args.get(get_page_parameter(), type=int, default=1)
+    pagination = Pagination(page=page,
+                            total=total,
+                            per_page=PER_PAGE,
+                            css_framework="bootstrap3")
+
+    # initialise loan forms
+    new_loan_form, loan_return_form = init_loan_forms()
+
+    return render_template('loans.html',
+                           books=found_books,
+                           new_loan_form=new_loan_form,
+                           loan_return_form=loan_return_form,
+                           pagination=pagination,
+                           thumbnails_dir=THUMBNAILS_DIR)
 
 
 def init_loan_forms():
@@ -142,12 +172,13 @@ def init_loan_forms():
     new_loan_form = None
     loan_return_form = None
 
-    if current_user.is_authenticated and current_user.classroom:
-        new_loan_form = NewLoanForm()
-        class_id = current_user.classroom.id
-        new_loan_form.pupil_id.choices = \
-            [(p[0], p[1]) for p in session.query(Pupil.id, Pupil.name).
-             filter(Pupil.classroom_id == class_id)]
+    if current_user.is_authenticated:
         loan_return_form = LoanReturnForm()
+        if current_user.classroom:
+            new_loan_form = NewLoanForm()
+            class_id = current_user.classroom.id
+            new_loan_form.pupil_id.choices = \
+                [(p[0], p[1]) for p in session.query(Pupil.id, Pupil.name).
+                 filter(Pupil.classroom_id == class_id)]
 
     return new_loan_form, loan_return_form

@@ -1,14 +1,116 @@
 {% extends "base.html" %}
-{% block title %}My Loans - {{ super() }}{% endblock %}
+{% block title %}Loans - {{ super() }}{% endblock %}
 {% block header %}
-
-{% if current_user.is_authenticated and not current_user.is_admin %}
-My Loans
-{% elif if current_user.is_authenticated and current_user.is_admin %}
-All Loans
-{% endif %}
-
+    {% if current_user.is_authenticated and not current_user.is_admin %}
+    My Loans
+    {% elif current_user.is_authenticated and current_user.is_admin %}
+    All Loans
+    {% endif %}
 {% endblock %}
-{% block content %}
 
+{% block content %}
+<nav aria-label="Page navigation">
+    {{ pagination.links }}
+    </nav>
+    
+    <div class="panel-group" id="found_books">
+        {% for book in books %}
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h4 class="panel-title">
+                    <div class="container-fluid">
+                        <a data-toggle="collapse" href="#found-book-{{ loop.index }}" >
+                            <div class="row">
+                                <div class="col-sm-2">
+                                    <img class="img-responsive img-thumbnail" 
+                                        src="{{ url_for('static', filename=thumbnails_dir + (book.image_name if book.image_name else 'default_cover.png') ) }}">
+                                </div>
+                                <div>
+                                    <br>
+                                    <span class="glyphicon glyphicon-expand pull-left"> </span>
+                                </div>
+                                <div class="col-sm-9">
+                                    <div>{{ book.title }}</div>
+                                    <div><h5 class="text-muted-green">{{ book.short_description | safe }}</h5></div>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </h4>
+                <div>
+                    <a class="col-xs-offset-2" href="{{ book.preview_url }}" target="blank">Preview online >></a>
+                </div>
+            </div>   
+            <div id="found-book-{{ loop.index }}" class="panel-collapse collapse out">
+                <div class="panel-body">
+                    <div class="container-fluid">
+                        <p>
+                            <dt>Description</dt>
+                            <dd>{{ book.description | safe }}</dd>
+                        </p>
+                        <p>
+                            <dt>Authors</dt>
+                            <dd>{{ book.authors_names }}</dd>
+                        </p>
+                        <p>
+                            <dt>Categories</dt>
+                            <dd>{{ book.categories_names }}</dd>
+                        </p>
+                        <p>
+                            <dt> <span class="glyphicon glyphicon-barcode"></span> ISBN</dt>
+                            <dd>{{ book.isbn13 }}</dd>
+                            <dd>{{ book.isbn10 }}</dd>
+                        </p>
+                        <p>
+                            <dt>Current Location</dt>
+                            <dd>{{ book.current_location|title() }}</dd>
+                        </p>
+                        <p>
+                            {% if loan_return_form %}
+                            <div class="bg-danger">
+                                <button data-target="#return-{{ book.id }}" class="btn btn-md btn-block btn-danger" data-toggle="collapse">
+                                    <span class="glyphicon glyphicon-expand pull-left"></span> <span class="col-xs-1">Return</span>
+                                </button>
+                                <dev id="return-{{ book.id }}" class="collapse container-fluid">
+                                    <form method="POST" 
+                                        action="{{ url_for('loans.record_return') }}" 
+                                        enctype="multipart/form-data">
+                                        {{ loan_return_form.csrf_token }}    
+                                        <div class="form-group">
+                                            {% set return_barcode_img_id = "return-barcode-%d"|format(book.id) %}
+                                            <dt>
+                                                <label><span class="glyphicon glyphicon-barcode"></span> Barcode</label>
+                                            </dt>
+                                            <dt>
+                                                {{ loan_return_form.barcode_img.label(class_="btn btn-sm btn-default", for=return_barcode_img_id)}}
+                                                <span id="update-{{ return_barcode_img_id }}"></span>
+                                            </dt>
+                                            <small class="text-muted-green">
+                                                    {{ loan_return_form.barcode_img.description }}
+                                            </small>
+                                            <dd hidden="hidden">
+                                                {{ loan_return_form.book_id(value=book.id) }}
+                                                {{ loan_return_form.barcode_img(id=return_barcode_img_id, accept="image/*", 
+                                                                                capture="camera", 
+                                                                                onchange="updateElement('" + return_barcode_img_id + "', 'update-" + return_barcode_img_id + "')")}}
+                                            </dd>
+                                        </div>
+                                        <button class="bps-btn btn btn-primary" type="submit">Return book</button>
+                                        <br>
+                                    </form>
+                                </dev>
+                            </div>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <nav aria-label="Page navigation">
+        {{ pagination.links }}
+    </nav>
+    
 {% endblock %}

@@ -200,7 +200,7 @@ def update_book():
         update_title = request.form['book_title'].strip()
         update_description = request.form['book_description'].strip()
         update_thumbnail_url = request.form['book_thumbnail_url'].strip()
-        update_preview_url = request.form['book_preview_url'].strip() 
+        update_preview_url = request.form['book_preview_url'].strip()
         update_categories = [c.strip() for c
                              in request.form['book_categories'].split(',')]
         update_authors = [a.strip() for a
@@ -257,35 +257,44 @@ def update_book():
 
 
 @mod.route('/view', methods=['GET'])
-def view_books(books=None):
+def view_books(ready_books=None):
     """Display books in the library.
 
     Defaults to displaying available books only.
     If `include_unavailable` parameter is set in the `request`,
-    it display all books; this is used in the admin view all.
+    it display all books; this is used in the admin view.
     """
     session = db_session()
 
-    search_terms = []
+    # get search cache
+    search_cache = []
 
     for book_title in session.query(Book.title).distinct():
-        search_terms.append(book_title[0])
+        search_cache.append(book_title[0])
 
     for category_name in session.query(Category.name).distinct():
-        search_terms.append(category_name[0])
+        search_cache.append(category_name[0])
 
     for author_name in session.query(Author.name).distinct():
-        search_terms.append(author_name[0])
+        search_cache.append(author_name[0])
 
-    search_terms.sort()
+    search_cache.sort()
 
+    # initialise loan forms
     new_loan_form, loan_return_form = init_loan_forms()
 
+    # requpest parameters
     page = request.args.get(get_page_parameter(), type=int, default=1)
     include_unavailable = request.args.get('include-unavailable')
     search_term = request.args.get('q')
-    if search_term:
-        search_term = '%' + search_term + '%'
+
+    # if books have been provided, display them
+    if ready_books:
+        total = len(ready_books)
+        books = ready_books
+    # apply search criteria if provided
+    elif search_term:
+        search_term = '%' + search_term.strip() + '%'
         total = session.query(Book).\
             join(Author.books).\
             filter(or_(Book.title.ilike(search_term),
@@ -307,10 +316,12 @@ def view_books(books=None):
                            Category.name.ilike(search_term)))
             ).order_by(Book.title).\
             limit(PER_PAGE).offset((page - 1) * PER_PAGE)
+    # include all books if specified
     elif include_unavailable:
         total = session.query(Book.id).count()
         books = session.query(Book).order_by(Book.title).\
             limit(PER_PAGE).offset((page - 1) * PER_PAGE)
+    # in all other cases, display all vailable books
     else:
         total = session.query(Book).filter(Book.is_available == 1).count()
         books = session.query(Book).filter(Book.is_available == 1).\
@@ -326,7 +337,7 @@ def view_books(books=None):
                            new_loan_form=new_loan_form,
                            loan_return_form=loan_return_form,
                            pagination=pagination,
-                           search_terms=search_terms,
+                           search_cache=search_cache,
                            thumbnails_dir=THUMBNAILS_DIR)
 
 

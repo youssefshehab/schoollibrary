@@ -139,15 +139,15 @@
                                                     <label><span class="glyphicon glyphicon-barcode"></span> Barcode</label>
                                                 </dt>
                                                 <dt>
-                                                    {{ new_loan_form.barcode_img.label(class_="btn btn-sm btn-default", for=return_barcode_img_id)}}
+                                                    {{ loan_return_form.barcode_img.label(class_="btn btn-sm btn-default", for=return_barcode_img_id)}}
                                                     <span id="update-{{ return_barcode_img_id }}"></span>
                                                 </dt>
                                                 <small class="text-muted-green">
-                                                        {{ new_loan_form.barcode_img.description }}
+                                                        {{ loan_return_form.barcode_img.description }}
                                                 </small>
                                                 <dd hidden="hidden">
                                                     {{ loan_return_form.book_id(value=book.id) }}
-                                                    {{ new_loan_form.barcode_img(id=return_barcode_img_id, accept="image/*", 
+                                                    {{ loan_return_form.barcode_img(id=return_barcode_img_id, accept="image/*", 
                                                                                  capture="camera", 
                                                                                  onchange="updateElement('" + return_barcode_img_id + "', 'update-" + return_barcode_img_id + "')")}}
                                                 </dd>
@@ -180,10 +180,10 @@
         $(document).ready(attachCollapseExpandEvents);
         
         $( function() {
-            var searchTerms = {{ search_terms | safe}};
+            var searchCache = {{ search_cache | safe}};
     
             $( "#search_box" ).autocomplete({
-                source: searchTerms,
+                source: searchCache,
                 minLength: 3
             });
         } );
