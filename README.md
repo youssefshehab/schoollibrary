@@ -1,6 +1,6 @@
 # School Library
 
-A stub for a primary school library system.
+A simple school library management system built with the below objectives.
 
 Initial objectives
 - Aid the administration of the library thorough calssification utilising online book databases
