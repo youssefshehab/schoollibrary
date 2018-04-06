@@ -57,3 +57,11 @@ class LoanReturnForm(FlaskForm):
                             validators=[DataRequired()],
                             description="Take a picture using tablet/phone " +
                             "camera or upload and image of the barcode.")
+
+
+class UpdateLoanPeriod(FlaskForm):
+    """A form for updating the default loan period."""
+
+    loan_period = IntegerField(validators=[DataRequired()],
+                               label="Loan period",
+                               description="The default period of loans.")

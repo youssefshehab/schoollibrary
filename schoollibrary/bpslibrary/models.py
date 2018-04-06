@@ -120,6 +120,7 @@ class Category(Model):
         """Category object representation."""
         return "<Category %r>" % self.name
 
+
 class Settings(Model):
     """Settings of the system."""
     __tablename__ = 'settings'
@@ -127,6 +128,8 @@ class Settings(Model):
     id = Column(Integer,
                 Sequence('settings_seq', start=0, increment=1),
                 primary_key=True)
+    # columns
+    loan_period = Column(Integer, nullable=False)
 
 
 class Author(Model):

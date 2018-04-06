@@ -3,10 +3,11 @@
 # A script to backup the database of the school library system.
 #
 # Notes:
-#     - The relative backups dir is a mounted usb which, is used for 
-#       storing backups of database and book covers thumbnails.
+#     - The relative backups dir is a mounted usb, which is used for 
+#       storing backups of database and book covers/thumbnails.
 #     - Directories are relative to the location of this script so that 
-#	this script can be called from anywhere.	
+#	this script is included within in the application directory
+#       and called from anywhere.	
 
 
 # source files
