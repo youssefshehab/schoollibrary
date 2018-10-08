@@ -9,6 +9,7 @@
 #	    it can be included within in the application directory
 #       and called from anywhere.	
 
+
 # source files
 DATABASE=`dirname $0`/bpslibrary/bpslibrary.db
 THUMBNAILDIR=`dirname $0`/bpslibrary/static/img/thumbnails
