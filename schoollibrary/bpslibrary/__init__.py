@@ -7,7 +7,7 @@
     
     :copyright:
     
-    Copyright (C) 2017 Youssef Shehab
+    Copyright (C) 2018 Youssef Shehab
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
