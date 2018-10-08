@@ -128,7 +128,7 @@
                                     <button data-target="#return-{{ book.id }}" class="btn btn-md btn-block btn-danger" data-toggle="collapse">
                                         <span class="glyphicon glyphicon-expand pull-left"></span> <span class="col-xs-1">Return</span>
                                     </button>
-                                    <dev id="return-{{ book.id }}" class="collapse container-fluid">
+                                    <div id="return-{{ book.id }}" class="collapse container-fluid">
                                         <form method="POST" 
                                             action="{{ url_for('loans.record_return') }}" 
                                             enctype="multipart/form-data">
@@ -155,7 +155,7 @@
                                             <button class="bps-btn btn btn-primary" type="submit">Return book</button>
                                             <br>
                                         </form>
-                                    </dev>
+                                    </div>
                                 </div>
                                 {% endif %}
                             {% endif %}
@@ -172,6 +172,11 @@
     {{ pagination.links }}
 </nav>
 
+<<<<<<< HEAD
+<div id="search_cache" hidden="hidden">{% for term in search_cache %}{{ term }}¬{% endfor %}</div>
+
+=======
+>>>>>>> 2aa61a802454e2bd531e4b8c1ae58ef74cb628e1
 {% endblock %}
 
 {% block scripts %}
@@ -180,7 +185,7 @@
         $(document).ready(attachCollapseExpandEvents);
         
         $( function() {
-            var searchCache = {{ search_cache | safe}};
+            var searchCache = $("#search_cache").text().split("¬");
     
             $( "#search_box" ).autocomplete({
                 source: searchCache,

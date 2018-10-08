@@ -34,19 +34,18 @@ Broadheath Primary School Library
             <button class="bps-btn btn btn-primary" type="submit">Find books</button>
         </form>
     </div>
+    <div id="search_terms" hidden="hidden">{% for term in search_terms %}{{ term }}¬{% endfor %}</div>
 
 {% endblock %}
 
 {% block scripts %}
 {{ super() }}
-<script>
-
-    
+<script>   
     $( function() {
-        var searchTerms = {{ search_terms | safe}};
-
+        var searchCache = $("#search_terms").text().split("¬");
+        
         $( "#search_box" ).autocomplete({
-            source: searchTerms,
+            source: searchCache,
             minLength: 3,
             classes: {"ui-autocomplete": "text-center"}
         });

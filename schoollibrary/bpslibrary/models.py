@@ -123,6 +123,7 @@ class Category(Model):
 
 class Settings(Model):
     """Settings of the system."""
+
     __tablename__ = 'settings'
     __table_args__ = {'extend_existing': True}
     id = Column(Integer,

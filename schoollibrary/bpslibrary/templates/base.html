@@ -111,7 +111,7 @@
             </div>
             <footer class="footer">
                 <div class="container-fluid">
-                    <p class="text-muted-green">&copy; 2017 by Youssef Shehab</p>
+                    <p class="text-muted-green">&copy; <span id="cryear"></span> by Youssef Shehab</p>
                 </div>
             </footer>
 
@@ -120,9 +120,14 @@
             <script src="{{ url_for('static', filename='js/jquery-ui.min.js') }}"></script>
             <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
             <script src="{{ url_for('static', filename='js/bps.js') }}"></script>
+            <script>
+                $(
+                    $("#cryear").text((new Date()).getFullYear())
+                );
+            </script>
             {% endblock scripts %}
         </div> <!-- /container -->
     </body>
-
+    
     
 </html>

@@ -6,7 +6,7 @@
 #     - The relative backups dir is a mounted usb, which is used for 
 #       storing backups of database and book covers/thumbnails.
 #     - Directories are relative to the location of this script so that 
-#	this script is included within in the application directory
+#	    it can be included within in the application directory
 #       and called from anywhere.	
 
 
